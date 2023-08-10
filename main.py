@@ -1,40 +1,49 @@
-
+from datetime import timedelta, datetime
 import requests
 from icalendar import Event, Calendar
-from datetime import datetime
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.firefox.options import Options
+from webdriver_manager.firefox import GeckoDriverManager
 
 
-def fetch_upcoming_movies():
-    url = 'https://www.filmstaden.se/api/v2/movie/upcoming/sv/1/1024/true'
-    headers = {
-        'authority': 'www.filmstaden.se',
-        'accept': '*/*',
-        'accept-language': 'en-US,en;q=0.9,sv;q=0.8,cs;q=0.7,fr;q=0.6,da;q=0.5,la;q=0.4',
-        'cache-control': 'no-cache',
-        'cookie': 'ASP.NET_SessionId=fq4wmsnkunjzwh3fufpr21rc; cf_chl_2=6ee55371e0d53cd; cf_clearance=JwBCJ9cNRf9LLzieOwCvyeSnPgEjV4XsFU5U5Ky2kVM-1691063880-0-1-e637e02d.5e37a49e.1670c306-250.0.0; __cf_bm=iHaTX8qJmnHC22tWf91AKpTHM4kZEb1p5lEUPue94UY-1691063885-0-AfIMHHwWs/erlG6EfF2V4STn9DAlLlCTrItIvqdyt2Z1HPE+BmKEf1HcIv8ACietd9pwhXdOc/3DHSQV7uySL74=',
-        'pragma': 'no-cache',
-        'referer': 'https://www.filmstaden.se/filmer-och-trailers',
-        'sec-ch-ua': '"Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': 'macOS',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-    }
+IMDB_URL = 'https://www.imdb.com/calendar/?ref_=rlm&region=SE&type=MOVIE'
+CALENDAR_SECTION = '[data-testid="calendar-section"]'
+MOVIE_LINK_CLASS = '.ipc-metadata-list-summary-item__t'
+UPCOMING_MOVIES = '[data-testid="coming-soon-entry"]'
 
-    response = requests.get(url=url, headers=headers, timeout=10)
 
-    if response.status_code == 200:
-        data = response.json()
+def scrape_imdb_upcoming_movies_by_region(region: str):
+    options = Options()
+    options.add_argument('-headless')
+    driver = webdriver.Firefox(service=FirefoxService(
+        GeckoDriverManager().install()), options=options)
 
-        return data['items']
-    return []
+    driver.get(url=IMDB_URL)
+    calendar_sections = driver.find_elements(By.CSS_SELECTOR, CALENDAR_SECTION)
+    for calender_section in calendar_sections:
+        release_date = calender_section.find_element(
+            By.CLASS_NAME, 'ipc-title__text')
+        print(release_date.text)
+        movies = calender_section.find_elements(
+            By.CSS_SELECTOR, UPCOMING_MOVIES)
+        for movie in movies:
+            title = movie.find_element(
+                By.CLASS_NAME, 'ipc-metadata-list-summary-item__t')
+            print(title.text)
+
+        # movie_links = calender_section.find_elements(By.CSS_SELECTOR, MOVIE_LINK_CLASS)
+        # href = link.get_attribute("href"):
+
+    return ''
 
 
 def create_ical_object(movies):
+    """"Create an iOS iCalendar"""
     cal = Calendar()
-    cal.add('prodid', '-//My Upcoming Movies Calendar//example.com//')
+    cal.add('prodid', '-//Upcoming Movies Calendar//example.com//')
     cal.add('version', '2.0')
     cal.add('x-wr-calname', 'Upcoming movies')
 
@@ -47,18 +56,19 @@ def create_ical_object(movies):
             event = Event()
             event.add('summary', original_title)
             event.add('description', description)
-            event.add('dtstart', datetime.strptime(
-                release_date, '%Y-%m-%dT%H:%M:%S'))
-            event.add('dtend', datetime.strptime(
-                release_date, '%Y-%m-%dT%H:%M:%S'))
+            start_date = datetime.strptime(release_date, '%Y-%m-%dT%H:%M:%S')
+            end_date = start_date + timedelta(hours=23, minutes=59, seconds=59)
+            event.add('dtstart', start_date)
+            event.add('dtend', end_date)
             cal.add_component(event)
 
     return cal
 
 
 if __name__ == "__main__":
-    items = fetch_upcoming_movies()
-    calendar = create_ical_object(items)
+    scrape_imdb_upcoming_movies_by_region('SE')
+    # items = fetch_upcoming_movies(id)
+    # calendar = create_ical_object(items)
 
-    with open('upcoming_movies.ics', 'wb') as f:
-        f.write(calendar.to_ical())
+    # with open('upcoming_movies.ics', 'wb') as f:
+    #     f.write(calendar.to_ical())
