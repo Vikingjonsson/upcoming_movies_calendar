@@ -1,7 +1,7 @@
 BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:Upcoming Movies Calendar
-X-WR-CALNAME:Upcoming movies
+X-WR-CALNAME:Upcoming Movies in Sweden
 BEGIN:VEVENT
 SUMMARY:Karate Kid: Legends
 DTSTART;VALUE=DATE:20250529

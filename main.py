@@ -1,24 +1,30 @@
-from datetime import timedelta, datetime
-from icalendar import Event, Calendar
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 
+from icalendar import Calendar, Event
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.firefox import GeckoDriverManager
 
 
-class Movie:
-    def __init__(self, title, release_date, link, description):
-        self.title = title
-        self.release_date = release_date
-        self.link = link
-        self.description = description
+@dataclass
+class ScheduledMovie:
+    release_date: str
+    uri: str
 
 
-def scrape_imdb_upcoming_movies_by_region(region: str):
-    URL = f"https://www.imdb.com/calendar/?ref_=rlm&region={region}&type=MOVIE"
-    scraped_movies: list[Movie] = []
+@dataclass
+class CalendarEvent:
+    summary: str
+    date: str
+    uri: str
+    description: str
+
+
+def scrape_imdb_upcoming_movies_by_region(region: str) -> list[CalendarEvent]:
+    url = f"https://www.imdb.com/calendar/?ref_=rlm&region={region}&type=MOVIE"
 
     options = Options()
     options.add_argument("-headless")
@@ -27,63 +33,52 @@ def scrape_imdb_upcoming_movies_by_region(region: str):
     driver = webdriver.Firefox(
         service=FirefoxService(GeckoDriverManager().install()), options=options
     )
-    driver.get(url=URL)
+    driver.get(url=url)
+
+    scheduled_movie_links: list[ScheduledMovie] = []
 
     calendar_sections = driver.find_elements(
         By.CSS_SELECTOR, '[data-testid="calendar-section"]'
     )
 
-    movies_data = []
-
-    for calender_section in calendar_sections:
-        release_date_element = calender_section.find_element(
-            By.CLASS_NAME, "ipc-title__text"
-        )
-        release_date = release_date_element.text.strip()
-        upcoming_movies = calender_section.find_elements(
+    for section in calendar_sections:
+        release_date_elem = section.find_element(By.CLASS_NAME, "ipc-title__text")
+        release_date = release_date_elem.text.strip()
+        upcoming_movies = section.find_elements(
             By.CSS_SELECTOR, '[data-testid="coming-soon-entry"]'
         )
-        for movie in upcoming_movies:
 
-            title_element = movie.find_element(
+        for movie in upcoming_movies:
+            title_elem = movie.find_element(
                 By.CLASS_NAME, "ipc-metadata-list-summary-item__t"
             )
-            href_attribute = title_element.get_attribute("href")
-
-            if href_attribute and release_date:
-                movies_data.append(
-                    {
-                        "link": href_attribute.strip(),
-                        "release_date": release_date.strip(),
-                    }
+            href = title_elem.get_attribute("href")
+            if href and release_date:
+                scheduled_movie_links.append(
+                    ScheduledMovie(
+                        release_date=release_date,
+                        uri=href.strip(),
+                    )
                 )
 
-    # Visit each movie's detail page to scrape additional information
-    for movie_data in movies_data:
-        movie_link = movie_data.get("link")
-        movie_release_date = movie_data.get("release_date")
+    scraped_movies: list[CalendarEvent] = []
 
-        if not movie_link or not movie_release_date:
-            continue
-
-        driver.get(movie_link)
-
-        hero_text_element = driver.find_element(
+    for movie_link in scheduled_movie_links:
+        driver.get(movie_link.uri)
+        hero_elem = driver.find_element(
             By.CSS_SELECTOR, '[data-testid="hero__primary-text"]'
         )
-        movie_plot_elem = driver.find_element(
-            By.CSS_SELECTOR, '[data-testid="plot-xl"]'
-        )
+        plot_elem = driver.find_element(By.CSS_SELECTOR, '[data-testid="plot-xl"]')
 
-        hero_text = hero_text_element.text.strip()
-        movie_plot = movie_plot_elem.text.strip()
+        summary = hero_elem.text.strip()
+        description = plot_elem.text.strip()
 
         scraped_movies.append(
-            Movie(
-                title=hero_text,
-                release_date=movie_release_date,
-                link=movie_link,
-                description=movie_plot,
+            CalendarEvent(
+                summary=summary,
+                date=movie_link.release_date,
+                uri=movie_link.uri,
+                description=description,
             )
         )
 
@@ -91,23 +86,25 @@ def scrape_imdb_upcoming_movies_by_region(region: str):
     return scraped_movies
 
 
-def create_ical_object(movies):
-    """ "Create an iOS iCalendar"""
+def create_ical_object(
+    scheduled_events: list[CalendarEvent], calendar_name="Upcoming Movies"
+):
+    """Create an iOS iCalendar"""
     calendar = Calendar()
     calendar.add("prodid", value="Upcoming Movies Calendar")
     calendar.add("version", "2.0")
-    calendar.add("x-wr-calname", "Upcoming movies")
+    calendar.add("x-wr-calname", calendar_name)
 
-    for movie in movies:
-        start_date = datetime.strptime(movie.release_date, "%b %d, %Y").date()
+    for event_data in scheduled_events:
+        start_date = datetime.strptime(event_data.date, "%b %d, %Y").date()
         end_date = start_date + timedelta(days=1)
 
         event = Event()
         event.add("dtstart", start_date)
         event.add("dtend", end_date)
-        event.add("summary", movie.title)
-        event.add("description", movie.description)
-        event.add("url", movie.link)
+        event.add("summary", event_data.summary)
+        event.add("description", event_data.description)
+        event.add("url", event_data.uri)
 
         calendar.add_component(event)
 
@@ -116,7 +113,7 @@ def create_ical_object(movies):
 
 if __name__ == "__main__":
     movies = scrape_imdb_upcoming_movies_by_region("SE")
-    calendar = create_ical_object(movies)
+    calendar = create_ical_object(movies, calendar_name="Upcoming Movies in Sweden")
 
     with open("upcoming_movies.ics", "wb") as f:
         f.write(calendar.to_ical())
