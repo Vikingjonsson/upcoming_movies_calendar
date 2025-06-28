@@ -1,169 +1,14 @@
 BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:Upcoming Movies Calendar
-X-WR-CALNAME:Upcoming Movies in Sweden
-BEGIN:VEVENT
-SUMMARY:Karate Kid: Legends
-DTSTART;VALUE=DATE:20250529
-DTEND;VALUE=DATE:20250530
-DESCRIPTION:After kung fu prodigy Li Fong relocates to New York City\, he 
- attracts unwanted attention from a local karate champion and embarks on a 
- journey to enter the ultimate karate competition with the help of Mr. Han 
- and Daniel LaRusso.
-URL:https://www.imdb.com/title/tt1674782/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:The Phoenician Scheme
-DTSTART;VALUE=DATE:20250530
-DTEND;VALUE=DATE:20250531
-DESCRIPTION:The story of a family and a family business.
-URL:https://www.imdb.com/title/tt30840798/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Peppa Meets the Baby Cinema Experience
-DTSTART;VALUE=DATE:20250530
-DTEND;VALUE=DATE:20250531
-DESCRIPTION:There's a new addition to the Pig family as Mummy Pig and fami
- ly welcome a new piglet. How will Peppa and George react to a new sibling?
-URL:https://www.imdb.com/title/tt36414406/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Detective Kien: The Headless Horror
-DTSTART;VALUE=DATE:20250530
-DTEND;VALUE=DATE:20250531
-DESCRIPTION:Detective Kien investigates a headless body found in a rural V
- ietnamese village during the Nguyen Dynasty. As supernatural elements emer
- ge\, he faces chilling twists in this 19th-century mystery.
-URL:https://www.imdb.com/title/tt36386168/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Ballerina
-DTSTART;VALUE=DATE:20250604
-DTEND;VALUE=DATE:20250605
-DESCRIPTION:An assassin trained in the traditions of the Ruska Roma organi
- zation sets out to seek revenge after her father's death.
-URL:https://www.imdb.com/title/tt7181546/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Young Hearts
-DTSTART;VALUE=DATE:20250606
-DTEND;VALUE=DATE:20250607
-DESCRIPTION:Elias develops feelings for his new neighbor Alexander. He soo
- n realizes he's falling in love for the first time.
-URL:https://www.imdb.com/title/tt15245268/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Mr. Nobody Against Putin
-DTSTART;VALUE=DATE:20250606
-DTEND;VALUE=DATE:20250607
-DESCRIPTION:A Russian teacher secretly documents his small town school's t
- ransformation into a war recruitment center during the Ukraine invasion\, 
- revealing the ethical dilemmas educators face amid propaganda and militari
- zation.
-URL:https://www.imdb.com/title/tt34965515/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Dangerous Animals
-DTSTART;VALUE=DATE:20250611
-DTEND;VALUE=DATE:20250612
-DESCRIPTION:When Zephyr\, a savvy and free-spirited surfer\, is abducted b
- y a shark-obsessed serial killer and held captive on his boat\, she must f
- igure out how to escape before he carries out a ritualistic feeding to the
-  sharks below.
-URL:https://www.imdb.com/title/tt32299316/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:How to Train Your Dragon
-DTSTART;VALUE=DATE:20250612
-DTEND;VALUE=DATE:20250613
-DESCRIPTION:As an ancient threat endangers both Vikings and dragons alike 
- on the isle of Berk\, the friendship between Hiccup\, an inventive Viking\
- , and Toothless\, a Night Fury dragon\, becomes the key to both species fo
- rging a new future together.
-URL:https://www.imdb.com/title/tt26743210/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:The Ugly Stepsister
-DTSTART;VALUE=DATE:20250613
-DTEND;VALUE=DATE:20250614
-DESCRIPTION:Follows Elvira as she battles against her gorgeous stepsister 
- in a realm where beauty reigns supreme. She resorts to extreme measures to
-  captivate the prince\, amidst a ruthless competition for physical perfect
- ion.
-URL:https://www.imdb.com/title/tt29344903/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:28 Years Later
-DTSTART;VALUE=DATE:20250618
-DTEND;VALUE=DATE:20250619
-DESCRIPTION:A group of survivors of the rage virus lives on a small island
- . When one of the group leaves the island on a mission into the mainland\,
-  he discovers secrets\, wonders\, and horrors that have mutated not only t
- he infected but other survivors.
-URL:https://www.imdb.com/title/tt10548174/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:F1: The Movie
-DTSTART;VALUE=DATE:20250625
-DTEND;VALUE=DATE:20250626
-DESCRIPTION:A Formula One driver comes out of retirement to mentor and tea
- m up with a younger driver.
-URL:https://www.imdb.com/title/tt16311594/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Elio
-DTSTART;VALUE=DATE:20250625
-DTEND;VALUE=DATE:20250626
-DESCRIPTION:Elio\, a space fanatic with an active imagination\, finds hims
- elf on a cosmic misadventure where he must form new bonds with alien lifef
- orms\, navigate a crisis of intergalactic proportions and somehow discover
-  who he is truly meant to be.
-URL:https://www.imdb.com/title/tt4900148/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:M3GAN 2.0
-DTSTART;VALUE=DATE:20250627
-DTEND;VALUE=DATE:20250628
-DESCRIPTION:Two years after M3GAN's rampage\, her creator\, Gemma\, resort
- s to resurrecting her infamous creation in order to take down Amelia\, the
-  military-grade weapon who was built by a defense contractor who stole M3G
- AN's underlying tech.
-URL:https://www.imdb.com/title/tt26342662/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Le Mohican
-DTSTART;VALUE=DATE:20250627
-DTEND;VALUE=DATE:20250628
-DESCRIPTION:Joseph is one of the last coastal shepherds in Corsica. His la
- nd is coveted by the underworld for a real estate project but he chooses n
- ot to give in. When he leaves the man who came to intimidate him\, the god
- father's own son\, between life and death\, he becomes the prey of a merci
- less hunt.
-URL:https://www.imdb.com/title/tt33030107/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Jim's Story
-DTSTART;VALUE=DATE:20250627
-DTEND;VALUE=DATE:20250628
-DESCRIPTION:A family living in the Jura mountains is torn apart following 
- the return of the son's biological father.
-URL:https://www.imdb.com/title/tt27811096/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Miley Cyrus: Something Beautiful
-DTSTART;VALUE=DATE:20250627
-DTEND;VALUE=DATE:20250628
-DESCRIPTION:A unique pop opera with 13 songs from Miley Cyrus's Something 
- Beautiful album\, driven by fantasy.
-URL:https://www.imdb.com/title/tt36590404/?ref_=rlm
-END:VEVENT
+X-WR-CALNAME:Upcoming Movies
 BEGIN:VEVENT
 SUMMARY:Jurassic World: Rebirth
 DTSTART;VALUE=DATE:20250702
 DTEND;VALUE=DATE:20250703
-DESCRIPTION:Five years post-Jurassic World Dominion\, an expedition braves
-  isolated equatorial regions to extract DNA from three massive prehistoric
-  creatures for a groundbreaking medical breakthrough.
+DESCRIPTION:Five years post-Jurassic World: Dominion (2022)\, an expeditio
+ n braves isolated equatorial regions to extract DNA from three massive pre
+ historic creatures for a groundbreaking medical breakthrough.
 URL:https://www.imdb.com/title/tt31036941/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
@@ -183,6 +28,14 @@ DESCRIPTION:Lotte\, 4\, is devastated by her family's relocation and belie
  ext-door neighbor\, everything changes. But getting a new friend might not
   be as easy as it seems.
 URL:https://www.imdb.com/title/tt29010189/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Brick
+DTSTART;VALUE=DATE:20250710
+DTEND;VALUE=DATE:20250711
+DESCRIPTION:A couple whose apartment building is suddenly surrounded by a 
+ mysterious brick wall must work with their neighbors to find a way out.
+URL:https://www.imdb.com/title/tt31806049/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Superman
@@ -229,6 +82,15 @@ DESCRIPTION:Forced to balance their roles as heroes with the strength of t
 URL:https://www.imdb.com/title/tt10676052/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Bambi: The Reckoning
+DTSTART;VALUE=DATE:20250725
+DTEND;VALUE=DATE:20250726
+DESCRIPTION:After a mother and son get in a car wreck\, they soon become h
+ unted by Bambi\, a mutated grief-stricken deer on a deadly rampage seeking
+  revenge for the death of his mother.
+URL:https://www.imdb.com/title/tt23621682/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:The Umesh Chronicles
 DTSTART;VALUE=DATE:20250725
 DTEND;VALUE=DATE:20250726
@@ -238,20 +100,20 @@ DESCRIPTION:The coming of age of a young girl\, Radha in 1980s middle-clas
 URL:https://www.imdb.com/title/tt28102362/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Bring Her Back
-DTSTART;VALUE=DATE:20250801
-DTEND;VALUE=DATE:20250802
-DESCRIPTION:A brother and sister uncover a terrifying ritual at the seclud
- ed home of their new foster mother.
-URL:https://www.imdb.com/title/tt32246771/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
 SUMMARY:The Naked Gun
 DTSTART;VALUE=DATE:20250801
 DTEND;VALUE=DATE:20250802
 DESCRIPTION:Only one man has the particular set of skills - to lead Police
   Squad and save the world.
 URL:https://www.imdb.com/title/tt3402138/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Bring Her Back
+DTSTART;VALUE=DATE:20250801
+DTEND;VALUE=DATE:20250802
+DESCRIPTION:A brother and sister uncover a terrifying ritual at the seclud
+ ed home of their new foster mother.
+URL:https://www.imdb.com/title/tt32246771/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:The Bad Guys 2
@@ -320,6 +182,14 @@ DESCRIPTION:In an exploration of self-discovery\, Victoria\, Athena and Aa
 URL:https://www.imdb.com/title/tt32478241/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Materialists
+DTSTART;VALUE=DATE:20250815
+DTEND;VALUE=DATE:20250816
+DESCRIPTION:A young\, ambitious New York City matchmaker finds herself tor
+ n between the perfect match and her imperfect ex.
+URL:https://www.imdb.com/title/tt30253473/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:Nobody 2
 DTSTART;VALUE=DATE:20250815
 DTEND;VALUE=DATE:20250816
@@ -330,12 +200,13 @@ DESCRIPTION:Suburban dad Hutch Mansell\, a former lethal assassin\, is pul
 URL:https://www.imdb.com/title/tt28996126/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Materialists
+SUMMARY:Pavements
 DTSTART;VALUE=DATE:20250815
 DTEND;VALUE=DATE:20250816
-DESCRIPTION:A young\, ambitious New York City matchmaker finds herself tor
- n between the perfect match and her imperfect ex.
-URL:https://www.imdb.com/title/tt30253473/?ref_=rlm
+DESCRIPTION:Documentary about the American indie band Pavement\, which com
+ bines scripts with documentary images of the band and a musical mise-en-sc
+ ene composed of songs from their discography.
+URL:https://www.imdb.com/title/tt30253514/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Julie Keeps Quiet
@@ -362,7 +233,7 @@ DTEND;VALUE=DATE:20250823
 DESCRIPTION:Years into their relationship\, Tim and Millie find themselves
   at a crossroads as they move to the country. With tensions already flarin
  g\, an encounter with an unnatural force threatens to corrupt their lives\
- , their love\, and their flesh.
+ , their love and their flesh.
 URL:https://www.imdb.com/title/tt31184028/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
@@ -375,24 +246,13 @@ DESCRIPTION:A desperately single bookseller\, lost in a fantasy world\, fi
 URL:https://www.imdb.com/title/tt31112509/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:The Dog
+SUMMARY:Familiar Touch
 DTSTART;VALUE=DATE:20250822
 DTEND;VALUE=DATE:20250823
-DESCRIPTION:A drug dealer is hired to drive a young escort\, Kadzo\, to an
- d from her clients. He falls in love with her and decides to rescue her fr
- om her situation\, but she doesn't want to be rescued\, and she definitely
-  doesn't need a man to save her.
-URL:https://www.imdb.com/title/tt28864874/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Kevlarsjäl
-DTSTART;VALUE=DATE:20250822
-DTEND;VALUE=DATE:20250823
-DESCRIPTION:When love enters the lives of teenage brothers Alex and Robin\
- , it shatters their protective symbiotic bubble. While marking the start o
- f a healing process for one of them\, it sends the other one down a path t
- hat will lead to complete catastrophe.
-URL:https://www.imdb.com/title/tt28301231/?ref_=rlm
+DESCRIPTION:An octogenarian woman transitions to life in assisted living a
+ s she contends with her conflicting relationship to herself and her caregi
+ vers amidst her shifting memory\, age identity\, and desires.
+URL:https://www.imdb.com/title/tt32928666/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:My Uncle Jens
@@ -405,23 +265,32 @@ DESCRIPTION:Norwegian teacher Akam lives a comfortable life in Oslo\, unti
 URL:https://www.imdb.com/title/tt28514971/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Vår gröna dröm
-DTSTART;VALUE=DATE:20250825
-DTEND;VALUE=DATE:20250826
-DESCRIPTION:In the 1970s\, surrounded by the ideals of the Green Wave\, To
- ba and Sussi seek a life in harmony with nature and move from the city to 
- the countryside to live out their dream. But freedom proves to be as chall
- enging as it is appealing.
-URL:https://www.imdb.com/title/tt36966126/?ref_=rlm
+SUMMARY:Kevlarsjäl
+DTSTART;VALUE=DATE:20250822
+DTEND;VALUE=DATE:20250823
+DESCRIPTION:When love enters the lives of teenage brothers Alex and Robin\
+ , it shatters their protective symbiotic bubble. While marking the start o
+ f a healing process for one of them\, it sends the other one down a path t
+ hat will lead to complete catastrophe.
+URL:https://www.imdb.com/title/tt28301231/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:The Roses
+SUMMARY:The Dog
+DTSTART;VALUE=DATE:20250822
+DTEND;VALUE=DATE:20250823
+DESCRIPTION:A drug dealer is hired to drive a young escort\, Kadzo\, to an
+ d from her clients. He falls in love with her and decides to rescue her fr
+ om her situation\, but she doesn't want to be rescued\, and she definitely
+  doesn't need a man to save her.
+URL:https://www.imdb.com/title/tt28864874/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:The Toxic Avenger
 DTSTART;VALUE=DATE:20250829
 DTEND;VALUE=DATE:20250830
-DESCRIPTION:A tinderbox of competition and resentments underneath the faç
- ade of a picture-perfect couple is ignited when the husband's professional
-  dreams come crashing down.
-URL:https://www.imdb.com/title/tt31973693/?ref_=rlm
+DESCRIPTION:A horrible toxic accident transforms downtrodden janitor\, Win
+ ston Gooze into a new evolution of hero: The Toxic Avenger.
+URL:https://www.imdb.com/title/tt1633359/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Caught Stealing
@@ -434,6 +303,15 @@ DESCRIPTION:Burned-out ex-baseball player Hank Thompson unexpectedly finds
 URL:https://www.imdb.com/title/tt1493274/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:The Roses
+DTSTART;VALUE=DATE:20250829
+DTEND;VALUE=DATE:20250830
+DESCRIPTION:A tinderbox of competition and resentments underneath the faç
+ ade of a picture-perfect couple is ignited when the husband's professional
+  dreams come crashing down.
+URL:https://www.imdb.com/title/tt31973693/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:Langue Étrangère
 DTSTART;VALUE=DATE:20250829
 DTEND;VALUE=DATE:20250830
@@ -442,6 +320,40 @@ DESCRIPTION:Fanny is 17 and still looking for herself. She struggles to ma
   of getting involved politically. Fanny is troubled. To please Lena\, she 
  is ready to do anything.
 URL:https://www.imdb.com/title/tt31015291/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Det är något som inte stämmer
+DTSTART;VALUE=DATE:20250829
+DTEND;VALUE=DATE:20250830
+DESCRIPTION:Petra's seemingly perfect life unravels when her husband has a
+ n affair. Meanwhile\, young Petra embarks on finding true love. Two women'
+ s journeys of self-discovery span different life stages\, offering a hopef
+ ul yet painful view on love.
+URL:https://www.imdb.com/title/tt22468338/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Nunnan - 25 år i kloster
+DTSTART;VALUE=DATE:20250829
+DTEND;VALUE=DATE:20250830
+DESCRIPTION:
+URL:https://www.imdb.com/title/tt35891998/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:André Rieu's 2025 Maastricht Concert: Waltz the Night Away!
+DTSTART;VALUE=DATE:20250830
+DTEND;VALUE=DATE:20250831
+DESCRIPTION:
+URL:https://www.imdb.com/title/tt36818317/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:From Darkness to Light
+DTSTART;VALUE=DATE:20250903
+DTEND;VALUE=DATE:20250904
+DESCRIPTION:Explores Jerry Lewis' unreleased 1972 film "The Day The Clown 
+ Cried"\, its mysterious disappearance\, and the search for footage. Includ
+ es interviews with Lewis' associates and previously unseen production cont
+ ent.
+URL:https://www.imdb.com/title/tt33030466/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:The Conjuring: Last Rites
@@ -463,7 +375,9 @@ BEGIN:VEVENT
 SUMMARY:Downton Abbey: The Grand Finale
 DTSTART;VALUE=DATE:20250912
 DTEND;VALUE=DATE:20250913
-DESCRIPTION:
+DESCRIPTION:Follows the Crawley family and their staff as they enter the 1
+ 930s. As the beloved cast of characters navigates how to lead Downton Abbe
+ y into the future\, they must embrace change and welcome a new chapter.
 URL:https://www.imdb.com/title/tt31888477/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
@@ -499,11 +413,19 @@ BEGIN:VEVENT
 SUMMARY:La pie voleuse
 DTSTART;VALUE=DATE:20250912
 DTEND;VALUE=DATE:20250913
-DESCRIPTION:Maria is no longer young and helps people who are even older t
- han she is. Struggling to make ends meet\, she refuses to accept her preca
- rious situation and occasionally steals a few euros from the kind souls sh
- e cares for with extreme devotion--who\, in return\, adore her.
+DESCRIPTION:An aging caregiver steals small amounts from her elderly clien
+ ts despite caring for them devotedly and being loved in return\, as she st
+ ruggles financially but won't accept her situation.
 URL:https://www.imdb.com/title/tt35319926/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fleak
+DTSTART;VALUE=DATE:20250912
+DTEND;VALUE=DATE:20250913
+DESCRIPTION:A 12-year-old boy loses his ability to walk in an accident. Lu
+ ckily a helpful furry creature from another dimension appears and takes th
+ e boy on a fantasy adventure\, where he finds a way to walk again.
+URL:https://www.imdb.com/title/tt14813764/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:The Life of Chuck
@@ -523,6 +445,16 @@ DESCRIPTION:A promising young football player joins an isolated compound t
 URL:https://www.imdb.com/title/tt20990442/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Falcon Express
+DTSTART;VALUE=DATE:20250919
+DTEND;VALUE=DATE:20250920
+DESCRIPTION:Pets trapped on a speeding train must thwart the plans of Hans
+ \, a vengeful badger seeking revenge. While the crash seems inevitable\, t
+ he pets can count on Falcon\, a sly and resourceful raccoon\, ready to do 
+ anything to save them.
+URL:https://www.imdb.com/title/tt36424914/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:From Hilde\, with Love
 DTSTART;VALUE=DATE:20250919
 DTEND;VALUE=DATE:20250920
@@ -533,6 +465,30 @@ DESCRIPTION:In Berlin 1942\, Hilde is a member of an anti-Nazi group. She
 URL:https://www.imdb.com/title/tt20420646/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:My Everything
+DTSTART;VALUE=DATE:20250919
+DTEND;VALUE=DATE:20250920
+DESCRIPTION:Follows Mona\, a woman in her 60's who is at a point in her li
+ fe where she wants to start caring for herself. But when her disabled son 
+ is unexpectedly having a baby\, she has another responsibility to deal wit
+ h.
+URL:https://www.imdb.com/title/tt21993128/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:The Dance Club
+DTSTART;VALUE=DATE:20250919
+DTEND;VALUE=DATE:20250920
+DESCRIPTION:
+URL:https://www.imdb.com/title/tt33269715/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Täydelliset vieraat
+DTSTART;VALUE=DATE:20250919
+DTEND;VALUE=DATE:20250920
+DESCRIPTION:
+URL:https://www.imdb.com/title/tt36151949/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:One Battle After Another
 DTSTART;VALUE=DATE:20250926
 DTEND;VALUE=DATE:20250927
@@ -541,15 +497,12 @@ DESCRIPTION:When their evil enemy resurfaces after 16 years\, a group of e
 URL:https://www.imdb.com/title/tt30144839/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Dreams (Sex Love)
+SUMMARY:Sentimental Value
 DTSTART;VALUE=DATE:20250926
 DTEND;VALUE=DATE:20250927
-DESCRIPTION:Johanne documents her intense crush on her french teacher. Her
-  mother\, grandmother end up reading these intimate writings. They're both
-  horrified by the contents but taken by the powerful writing and story. Jo
- hanne navigates romantic ideals vs reality\, exploring emotions of self-di
- scovery\, love\, sexuality.
-URL:https://www.imdb.com/title/tt30810787/?ref_=rlm
+DESCRIPTION:An intimate exploration of family\, memories\, and the reconci
+ liatory power of art.
+URL:https://www.imdb.com/title/tt27714581/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:The Great Lillian Hall
@@ -570,27 +523,20 @@ DESCRIPTION:A celebration of Argentine Gauchos\, a community of cowboys an
 URL:https://www.imdb.com/title/tt30319823/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:7 steg
+SUMMARY:7 Steg
 DTSTART;VALUE=DATE:20250926
 DTEND;VALUE=DATE:20250927
 DESCRIPTION:
 URL:https://www.imdb.com/title/tt34939590/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Michael
+SUMMARY:The Long Walk
 DTSTART;VALUE=DATE:20251003
 DTEND;VALUE=DATE:20251004
-DESCRIPTION:The story of the famous musician Michael Jackson\, known as th
- e King of Pop.
-URL:https://www.imdb.com/title/tt11378946/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:Sentimental Value
-DTSTART;VALUE=DATE:20251003
-DTEND;VALUE=DATE:20251004
-DESCRIPTION:An intimate and moving exploration of family\, memories\, and 
- the reconciliatory power of art.
-URL:https://www.imdb.com/title/tt27714581/?ref_=rlm
+DESCRIPTION:A group of teenage boys compete in an annual contest known as 
+ "The Long Walk\," where they must maintain a certain walking speed or get 
+ shot.
+URL:https://www.imdb.com/title/tt10374610/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Four Mothers
@@ -602,11 +548,21 @@ DESCRIPTION:A struggling novelist who is forced to take care of three ecce
 URL:https://www.imdb.com/title/tt19391518/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:The Dance Club
+SUMMARY:Michael
 DTSTART;VALUE=DATE:20251003
 DTEND;VALUE=DATE:20251004
-DESCRIPTION:
-URL:https://www.imdb.com/title/tt33269715/?ref_=rlm
+DESCRIPTION:The story of the famous musician Michael Jackson\, known as th
+ e King of Pop.
+URL:https://www.imdb.com/title/tt11378946/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Grand Prix of Europe
+DTSTART;VALUE=DATE:20251003
+DTEND;VALUE=DATE:20251004
+DESCRIPTION:Young mouse Edda dreams of racing cars. When European Grand Pr
+ ix nears\, she seizes chance to enter race\, meet idol\, defy odds to real
+ ize dream\, help struggling family fairground business secure future.
+URL:https://www.imdb.com/title/tt32897929/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Tron: Ares
@@ -625,11 +581,24 @@ DESCRIPTION:An imaginative tale of two strangers and the unbelievable jour
 URL:https://www.imdb.com/title/tt13650700/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Animal Friends
+SUMMARY:Roofman
 DTSTART;VALUE=DATE:20251010
 DTEND;VALUE=DATE:20251011
-DESCRIPTION:Two animals become unlikely friends.
-URL:https://www.imdb.com/title/tt16911616/?ref_=rlm
+DESCRIPTION:The story of the rooftop robber\, Jeffrey Manchester\, and his
+  time on the lam evading capture.
+URL:https://www.imdb.com/title/tt4627382/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Bo Being Bo Widerberg
+DTSTART;VALUE=DATE:20251010
+DTEND;VALUE=DATE:20251011
+DESCRIPTION:The documentary chronicles Bo Widerberg's journey from 1960s M
+ almö\, where he worked as a writer and film critic\, to his successes as 
+ a director in Stockholm and international adventures in Cannes and New Yor
+ k. The film also explores the personal costs of his artistic vision and ho
+ w his pursuit of life and authenticity affected both himself and those aro
+ und him.
+URL:https://www.imdb.com/title/tt35892253/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Measures for a Funeral
@@ -644,20 +613,47 @@ BEGIN:VEVENT
 SUMMARY:Black Phone 2
 DTSTART;VALUE=DATE:20251017
 DTEND;VALUE=DATE:20251018
-DESCRIPTION:
+DESCRIPTION:As Finn\, now 17\, struggles with life after his captivity\, h
+ is sister begins receiving calls in her dreams from the black phone and se
+ eing disturbing visions of three boys being stalked at a winter camp known
+  as Alpine Lake.
 URL:https://www.imdb.com/title/tt29644189/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Bo Being Bo Widerberg
+SUMMARY:The Smashing Machine
 DTSTART;VALUE=DATE:20251017
 DTEND;VALUE=DATE:20251018
-DESCRIPTION:The documentary chronicles Bo Widerberg's journey from 1960s M
- almö\, where he worked as a writer and film critic\, to his successes as 
- a director in Stockholm and international adventures in Cannes and New Yor
- k. The film also explores the personal costs of his artistic vision and ho
- w his pursuit of life and authenticity affected both himself and those aro
- und him.
-URL:https://www.imdb.com/title/tt35892253/?ref_=rlm
+DESCRIPTION:The story of mixed-martial arts and UFC champion Mark Kerr.
+URL:https://www.imdb.com/title/tt11214558/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dreams (Sex Love)
+DTSTART;VALUE=DATE:20251017
+DTEND;VALUE=DATE:20251018
+DESCRIPTION:Johanne documents her intense crush on her french teacher. Her
+  mother\, grandmother end up reading these intimate writings. They're both
+  horrified by the contents but taken by the powerful writing and story. Jo
+ hanne navigates romantic ideals vs reality\, exploring emotions of self-di
+ scovery\, love\, sexuality.
+URL:https://www.imdb.com/title/tt30810787/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Late Shift
+DTSTART;VALUE=DATE:20251017
+DTEND;VALUE=DATE:20251018
+DESCRIPTION:Floria\, a dedicated nurse\, tirelessly serves in an understaf
+ fed hospital ward. However\, today her shift becomes a tense and urgent ra
+ ce against the clock.
+URL:https://www.imdb.com/title/tt32204858/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Springsteen: Deliver Me from Nowhere
+DTSTART;VALUE=DATE:20251024
+DTEND;VALUE=DATE:20251025
+DESCRIPTION:Bruce Springsteen's journey crafting his 1982 album Nebraska\,
+  which emerged as he recorded Born in the USA with the E Street Band. Base
+ d on Warren Zanes' book.
+URL:https://www.imdb.com/title/tt31923069/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Mortal Kombat II
@@ -677,13 +673,25 @@ DESCRIPTION:Gabby and Grandma Gigi's road trip takes an unexpected turn wh
 URL:https://www.imdb.com/title/tt32214143/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Deliver Me from Nowhere
+SUMMARY:When Fall Is Coming
 DTSTART;VALUE=DATE:20251024
 DTEND;VALUE=DATE:20251025
-DESCRIPTION:Bruce Springsteen's journey crafting his 1982 album Nebraska\,
-  which emerged as he recorded Born in the USA with the E Street Band. Base
- d on Warren Zanes' book.
-URL:https://www.imdb.com/title/tt31923069/?ref_=rlm
+DESCRIPTION:Michelle\, a retiree in Burgundy\, expects her grandson Lucas 
+ but a mistake ruins her plans. Her friend Marie-Claude's son is released f
+ rom prison\, reviving Michelle's purpose.
+URL:https://www.imdb.com/title/tt29482291/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Vi dör i natt
+DTSTART;VALUE=DATE:20251024
+DTEND;VALUE=DATE:20251025
+DESCRIPTION:In a quiet town\, a routine day turns into a siege when store 
+ employees and customers barricade themselves to protect a wounded man flee
+ ing a brutal gang. Francki\, new to the job and secretly in love with the 
+ employee Ellie\, takes the desperate step of locking the doors\, sealing t
+ heir fate as the gang surrounds the building. With no way out\, the group 
+ faces a brutal de... Read all
+URL:https://www.imdb.com/title/tt34549572/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Bert sabbar allt
@@ -721,6 +729,15 @@ DESCRIPTION:The worst is yet to come\, despite Joel's belief that his trou
 URL:https://www.imdb.com/title/tt29011016/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Bugonia
+DTSTART;VALUE=DATE:20251031
+DTEND;VALUE=DATE:20251101
+DESCRIPTION:Two conspiracy-obsessed young men kidnap the high-powered CEO 
+ of a major company\, convinced that she is an alien intent on destroying p
+ lanet Earth.
+URL:https://www.imdb.com/title/tt12300742/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:Hanami
 DTSTART;VALUE=DATE:20251031
 DTEND;VALUE=DATE:20251101
@@ -747,13 +764,19 @@ DESCRIPTION:A man joins a game show where contestants\, allowed to go anyw
 URL:https://www.imdb.com/title/tt14107334/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Bugonia
+SUMMARY:North
 DTSTART;VALUE=DATE:20251107
 DTEND;VALUE=DATE:20251108
-DESCRIPTION:Two conspiracy-obsessed young men kidnap the high-powered CEO 
- of a major company\, convinced that she is an alien intent on destroying p
- lanet Earth.
-URL:https://www.imdb.com/title/tt12300742/?ref_=rlm
+DESCRIPTION:Young Gerda sets off into the great unknown in search of her f
+ riend Kai\, who has mysteriously vanished.
+URL:https://www.imdb.com/title/tt35485979/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Hvis ingen går i fella
+DTSTART;VALUE=DATE:20251107
+DTEND;VALUE=DATE:20251108
+DESCRIPTION:
+URL:https://www.imdb.com/title/tt35727399/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Now You See Me: Now You Don't
@@ -768,9 +791,9 @@ BEGIN:VEVENT
 SUMMARY:Eagles of the Republic
 DTSTART;VALUE=DATE:20251114
 DTEND;VALUE=DATE:20251115
-DESCRIPTION:Egypt's most adored actor\, George El-Nabawi\, falls into disg
- race with the authorities overnight. On the verge of losing everything\, G
- eorge is forced to accept an offer he can't refuse.
+DESCRIPTION:Egypt's most adored actor\, George Fahmy\, falls into disgrace
+  with the authorities overnight. On the verge of losing everything\, Georg
+ e is forced to accept an offer he can't refuse.
 URL:https://www.imdb.com/title/tt30781967/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
@@ -783,18 +806,9 @@ DESCRIPTION:A newly formed family confronts challenges while pursuing indi
 URL:https://www.imdb.com/title/tt32046117/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Climate in Therapy
-DTSTART;VALUE=DATE:20251114
-DTEND;VALUE=DATE:20251115
-DESCRIPTION:In a godforsaken hotel by the highway\, seven climate scientis
- ts partake in therapy to confront a previously unknown field of study: the
- ir own emotions.
-URL:https://www.imdb.com/title/tt18163368/?ref_=rlm
-END:VEVENT
-BEGIN:VEVENT
 SUMMARY:Wicked: For Good
-DTSTART;VALUE=DATE:20251121
-DTEND;VALUE=DATE:20251122
+DTSTART;VALUE=DATE:20251119
+DTEND;VALUE=DATE:20251120
 DESCRIPTION:Follows Elphaba\, the future Wicked Witch of the West and her 
  relationship with Glinda\, the Good Witch of the North. The second of a tw
  o-part feature film adaptation of the Broadway musical.
@@ -811,6 +825,33 @@ DESCRIPTION:1944\, Vermiglio\, a remote mountain village. The arrival of P
 URL:https://www.imdb.com/title/tt28618488/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Afternoons of Solitude
+DTSTART;VALUE=DATE:20251121
+DTEND;VALUE=DATE:20251122
+DESCRIPTION:Explores the spiritual pain of bullfighting\, the tormented to
+ rero in a ring\, one of the most excessive and graphic examples of the ori
+ gin of Southern European civilization
+URL:https://www.imdb.com/title/tt26245982/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Back to Reality
+DTSTART;VALUE=DATE:20251121
+DTEND;VALUE=DATE:20251122
+DESCRIPTION:A bank robber released from jail must unlock his traumatised b
+ rother's memory to recover stolen loot.
+URL:https://www.imdb.com/title/tt27817389/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:100 litraa sahtia
+DTSTART;VALUE=DATE:20251121
+DTEND;VALUE=DATE:20251122
+DESCRIPTION:Two middle-aged sisters in a Finnish village promise to brew b
+ eer for a wedding but drink their entire batch. In a hilarious race agains
+ t time\, they struggle with hangovers while trying to make more beer and s
+ ave their reputations.
+URL:https://www.imdb.com/title/tt33311744/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:Zootopia 2
 DTSTART;VALUE=DATE:20251128
 DTEND;VALUE=DATE:20251129
@@ -818,6 +859,14 @@ DESCRIPTION:Brave rabbit cop Judy Hopps and her friend\, the fox Nick Wild
  e\, team up again to crack a new case\, the most perilous and intricate of
   their careers.
 URL:https://www.imdb.com/title/tt26443597/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:It Was Just an Accident
+DTSTART;VALUE=DATE:20251128
+DTEND;VALUE=DATE:20251129
+DESCRIPTION:A small mishap triggers a chain reaction of ever-growing probl
+ ems.
+URL:https://www.imdb.com/title/tt36491653/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Quiet Life
@@ -829,6 +878,16 @@ DESCRIPTION:Refugee family in Sweden faces trauma after youngest daughter
 URL:https://www.imdb.com/title/tt33030320/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Animal Tales of Christmas Magic
+DTSTART;VALUE=DATE:20251128
+DTEND;VALUE=DATE:20251129
+DESCRIPTION:Immerse yourself in these modern\, heartwarming tales where an
+ imals embark on enchanting journeys\, from France to Japan via the Far Nor
+ th and its northern lights\, to spread joy and generosity where the magic 
+ of Christmas knows no bounds.
+URL:https://www.imdb.com/title/tt33077003/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:Five Nights at Freddy's 2
 DTSTART;VALUE=DATE:20251205
 DTEND;VALUE=DATE:20251206
@@ -836,6 +895,15 @@ DESCRIPTION:1987\, after a rather unstable life\, Jeremy Fitzgerald found
  work as a security guard at the new Freddy's Fazbear Pizzeria\, but when h
  e entered there he would realize that not everything there is as it seems.
 URL:https://www.imdb.com/title/tt30274401/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:DJ Ahmet
+DTSTART;VALUE=DATE:20251205
+DTEND;VALUE=DATE:20251206
+DESCRIPTION:A 15-year-old Yuruk boy from a remote North Macedonian village
+  escapes into music amidst parental expectations\, societal conservatism\,
+  and forbidden love for a promised girl.
+URL:https://www.imdb.com/title/tt34964187/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Avatar: Fire and Ash
@@ -875,6 +943,13 @@ DESCRIPTION:A grumpy widower's life changes when he finds himself at the c
 URL:https://www.imdb.com/title/tt34250056/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Handbok för superhjältar
+DTSTART;VALUE=DATE:20251225
+DTEND;VALUE=DATE:20251226
+DESCRIPTION:
+URL:https://www.imdb.com/title/tt21431604/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:Håkan Bråkan 003
 DTSTART;VALUE=DATE:20251225
 DTEND;VALUE=DATE:20251226
@@ -885,11 +960,13 @@ DESCRIPTION:Håkan is about to lose his best friend and gets the idea to f
 URL:https://www.imdb.com/title/tt33477936/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Handbok för superhjältar
-DTSTART;VALUE=DATE:20251225
-DTEND;VALUE=DATE:20251226
-DESCRIPTION:
-URL:https://www.imdb.com/title/tt21431604/?ref_=rlm
+SUMMARY:Diamanti
+DTSTART;VALUE=DATE:20260109
+DTEND;VALUE=DATE:20260110
+DESCRIPTION:A director calls all his favourite actresses to film a movie s
+ et in Rome in the 70s that tells the vicissitudes revolving around a prest
+ igious tailoring.
+URL:https://www.imdb.com/title/tt32810496/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Soulm8te
@@ -902,18 +979,19 @@ DESCRIPTION:A man acquires an Artificially Intelligent android to cope wit
 URL:https://www.imdb.com/title/tt32654916/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Diamanti
-DTSTART;VALUE=DATE:20260109
-DTEND;VALUE=DATE:20260110
-DESCRIPTION:A director calls all his favourite actresses to film a movie s
- et in Rome in the 70s that tells the vicissitudes revolving around a prest
- igious tailoring.
-URL:https://www.imdb.com/title/tt32810496/?ref_=rlm
+SUMMARY:Hamnet
+DTSTART;VALUE=DATE:20260123
+DTEND;VALUE=DATE:20260124
+DESCRIPTION:The story of Agnes - the wife of William Shakespeare - as she 
+ struggles to come to terms with the loss of her only son\, Hamnet. A human
+  and heart-stopping story as the backdrop to the creation of Shakespeare's
+  most famous play\, Hamlet.
+URL:https://www.imdb.com/title/tt14905854/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:Reminders of Him
-DTSTART;VALUE=DATE:20260213
-DTEND;VALUE=DATE:20260214
+DTSTART;VALUE=DATE:20260206
+DTEND;VALUE=DATE:20260207
 DESCRIPTION:After prison\, Kenna attempts to reconnect with her young daug
  hter but faces resistance from everyone except a bar owner with ties to he
  r child. As they grow closer\, Kenna must confront her past mistakes to bu
@@ -921,12 +999,18 @@ DESCRIPTION:After prison\, Kenna attempts to reconnect with her young daug
 URL:https://www.imdb.com/title/tt33714084/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Skurkarnas skurk
+DTSTART;VALUE=DATE:20260206
+DTEND;VALUE=DATE:20260207
+DESCRIPTION:Feature film based on the popular books.
+URL:https://www.imdb.com/title/tt28681764/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:The SpongeBob Movie: Search for Squarepants
 DTSTART;VALUE=DATE:20260220
 DTEND;VALUE=DATE:20260221
-DESCRIPTION:SpongeBob and his friends Patrick\, Squidward\, Sandy\, and Mr
- . Krabs journey to the ocean's depths to face the Flying Dutchman's ghost\
- , encountering challenges and uncovering marine mysteries.
+DESCRIPTION:SpongeBob journeys to the ocean's depths to face the Flying Du
+ tchman's ghost\, encountering challenges and uncovering marine mysteries.
 URL:https://www.imdb.com/title/tt23572848/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
@@ -969,11 +1053,32 @@ DESCRIPTION:
 URL:https://www.imdb.com/title/tt36352591/?ref_=rlm
 END:VEVENT
 BEGIN:VEVENT
+SUMMARY:Animal Friends
+DTSTART;VALUE=DATE:20260501
+DTEND;VALUE=DATE:20260502
+DESCRIPTION:Two animals become unlikely friends.
+URL:https://www.imdb.com/title/tt16911616/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
 SUMMARY:Star Wars: The Mandalorian and Grogu
 DTSTART;VALUE=DATE:20260522
 DTEND;VALUE=DATE:20260523
 DESCRIPTION:Once a lone bounty hunter\, Mandalorian Din Djarin and his app
  rentice Grogu embark on an exciting new Star Wars adventure.
 URL:https://www.imdb.com/title/tt30825738/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Scary Movie 6
+DTSTART;VALUE=DATE:20260612
+DTEND;VALUE=DATE:20260613
+DESCRIPTION:
+URL:https://www.imdb.com/title/tt32093575/?ref_=rlm
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Untitled Steven Spielberg Amblin Universal Event Film
+DTSTART;VALUE=DATE:20260612
+DTEND;VALUE=DATE:20260613
+DESCRIPTION:
+URL:https://www.imdb.com/title/tt15047880/?ref_=rlm
 END:VEVENT
 END:VCALENDAR

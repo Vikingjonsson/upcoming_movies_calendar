@@ -8,3 +8,6 @@ venv/
 geckodriver.log
 *.ics
 !example.ics
+
+# macOS
+.DS_Store
