@@ -1,175 +1,252 @@
 import argparse
+import hashlib
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Generator
+from datetime import date, datetime, timedelta
+from typing import Generator, Optional
 
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, vUri
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service as FirefoxService
-from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+IMDB_CALENDAR_URL_TEMPLATE = (
+    "https://www.imdb.com/calendar/?ref_=rlm&region={region}&type=MOVIE"
+)
+IMDB_DATE_FORMAT = "%b %d, %Y"
+
+PAGE_LOAD_TIMEOUT_SECONDS = 30
+ELEMENT_WAIT_TIMEOUT_SECONDS = 10
+
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
+BROWSER_WINDOW_SIZE = "1440,900"
+
+CALENDAR_SECTION_SELECTOR = '[data-testid="calendar-section"]'
+MOVIE_ENTRY_SELECTOR = '[data-testid="coming-soon-entry"]'
+MOVIE_TITLE_CLASS_NAME = "ipc-metadata-list-summary-item__t"
+RELEASE_DATE_CLASS_NAME = "ipc-title__text"
+PLOT_SELECTOR = '[data-testid="plot-xl"]'
+POSTER_IMAGE_SELECTOR = '[data-testid="hero-media__poster"] img'
+
+EVENT_UID_DOMAIN = "@upcoming-movies"
+EVENT_UID_HASH_LENGTH = 16
+
+DEFAULT_REGION = "SE"
+DEFAULT_OUTPUT_FILENAME = "upcoming_movies.ics"
+DEFAULT_CALENDAR_NAME = "Upcoming Movies"
+DEFAULT_DESCRIPTION = "No description available"
+
 
 @contextmanager
-def get_webdriver() -> Generator[webdriver.Firefox, None, None]:
-    """Context manager for WebDriver to ensure proper cleanup."""
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--window-size=1440,1035")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
+def create_headless_chrome_driver() -> Generator[webdriver.Chrome, None, None]:
+    chrome_options = Options()
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument(f"--window-size={BROWSER_WINDOW_SIZE}")
+    chrome_options.add_argument(f"--user-agent={BROWSER_USER_AGENT}")
 
-    driver = None
+    chrome_driver = None
     try:
-        driver = webdriver.Firefox(
-            service=FirefoxService(GeckoDriverManager().install()), options=options
+        chrome_service = ChromeService(ChromeDriverManager().install())
+        chrome_driver = webdriver.Chrome(
+            service=chrome_service, options=chrome_options
         )
-        yield driver
+        chrome_driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT_SECONDS)
+        yield chrome_driver
     finally:
-        if driver:
-            driver.quit()
+        if chrome_driver:
+            chrome_driver.quit()
 
 
 @dataclass
 class ScheduledMovie:
-    release_date: str
-    uri: str
+    title: str
+    release_date_text: str
+    imdb_url: str
 
 
 @dataclass
-class CalendarEvent:
-    summary: str
-    date: str
-    uri: str
-    description: str
+class MovieCalendarEvent:
+    title: str
+    release_date: date
+    imdb_url: str
+    plot_description: str
+    poster_image_url: Optional[str] = None
 
 
-def scrape_imdb_upcoming_movies_by_region(region: str) -> list[CalendarEvent]:
-    """Scrape upcoming movies from IMDB for a specific region."""
-    url = f"https://www.imdb.com/calendar/?ref_=rlm&region={region}&type=MOVIE"
-    logging.info(f"Scraping upcoming movies for region: {region}")
+def parse_imdb_release_date(date_text: str) -> date:
+    return datetime.strptime(date_text, IMDB_DATE_FORMAT).date()
 
-    with get_webdriver() as driver:
+
+def generate_calendar_event_uid(imdb_url: str, release_date: date) -> str:
+    raw_identifier = f"{imdb_url}:{release_date.isoformat()}"
+    hash_prefix = hashlib.sha256(raw_identifier.encode()).hexdigest()[
+        :EVENT_UID_HASH_LENGTH
+    ]
+    return f"{hash_prefix}{EVENT_UID_DOMAIN}"
+
+
+def collect_movie_links_from_calendar_page(
+    driver: webdriver.Chrome,
+) -> list[ScheduledMovie]:
+    element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
+    calendar_sections = element_wait.until(
+        EC.presence_of_all_elements_located(
+            (By.CSS_SELECTOR, CALENDAR_SECTION_SELECTOR)
+        )
+    )
+
+    logging.info("Found %d calendar sections", len(calendar_sections))
+
+    movie_links: list[ScheduledMovie] = []
+
+    for section in calendar_sections:
         try:
-            driver.get(url)
-            logging.info(f"Loaded IMDB calendar page for region {region}")
+            release_date_element = section.find_element(
+                By.CLASS_NAME, RELEASE_DATE_CLASS_NAME
+            )
+            release_date_text = release_date_element.text.strip()
 
-            scheduled_movie_links: list[ScheduledMovie] = []
-
-            calendar_sections = driver.find_elements(
-                By.CSS_SELECTOR, '[data-testid="calendar-section"]'
+            movie_entries = section.find_elements(
+                By.CSS_SELECTOR, MOVIE_ENTRY_SELECTOR
             )
 
-            if not calendar_sections:
-                logging.warning("No calendar sections found on the page")
-                return []
-
-            logging.info(f"Found {len(calendar_sections)} calendar sections")
-
-            for section in calendar_sections:
+            for movie_entry in movie_entries:
                 try:
-                    release_date_elem = section.find_element(
-                        By.CLASS_NAME, "ipc-title__text"
+                    title_element = movie_entry.find_element(
+                        By.CLASS_NAME, MOVIE_TITLE_CLASS_NAME
                     )
-                    release_date = release_date_elem.text.strip()
-
-                    upcoming_movies = section.find_elements(
-                        By.CSS_SELECTOR, '[data-testid="coming-soon-entry"]'
-                    )
-
-                    for movie in upcoming_movies:
-                        try:
-                            title_elem = movie.find_element(
-                                By.CLASS_NAME, "ipc-metadata-list-summary-item__t"
+                    movie_url = title_element.get_attribute("href")
+                    movie_title = title_element.text.strip()
+                    if movie_url and release_date_text and movie_title:
+                        movie_links.append(
+                            ScheduledMovie(
+                                title=movie_title,
+                                release_date_text=release_date_text,
+                                imdb_url=movie_url.strip(),
                             )
-                            href = title_elem.get_attribute("href")
-                            if href and release_date:
-                                scheduled_movie_links.append(
-                                    ScheduledMovie(
-                                        release_date=release_date,
-                                        uri=href.strip(),
-                                    )
-                                )
-                        except NoSuchElementException:
-                            logging.warning("Could not find movie title element")
-                            continue
-
+                        )
                 except NoSuchElementException:
-                    logging.warning("Could not find release date element")
-                    continue
+                    logging.warning("Could not find movie title element")
 
-            logging.info(f"Found {len(scheduled_movie_links)} movies")
+        except NoSuchElementException:
+            logging.warning("Could not find release date element in section")
 
-            scraped_movies: list[CalendarEvent] = []
+    logging.info("Found %d movies on calendar page", len(movie_links))
+    return movie_links
 
-            for i, movie_link in enumerate(scheduled_movie_links, 1):
+
+def scrape_movie_detail_page(
+    driver: webdriver.Chrome, movie: ScheduledMovie
+) -> MovieCalendarEvent:
+    parsed_release_date = parse_imdb_release_date(movie.release_date_text)
+    plot_description = DEFAULT_DESCRIPTION
+    poster_image_url = None
+
+    try:
+        driver.get(movie.imdb_url)
+
+        try:
+            element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
+            plot_element = element_wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, PLOT_SELECTOR)
+                )
+            )
+            plot_description = plot_element.text.strip()
+        except WebDriverException:
+            logging.warning("Could not fetch description for '%s'", movie.title)
+
+        try:
+            poster_element = driver.find_element(
+                By.CSS_SELECTOR, POSTER_IMAGE_SELECTOR
+            )
+            poster_image_url = poster_element.get_attribute("src")
+        except NoSuchElementException:
+            logging.warning("Could not find poster for '%s'", movie.title)
+
+    except WebDriverException:
+        logging.warning("Could not load detail page for '%s'", movie.title)
+
+    return MovieCalendarEvent(
+        title=movie.title,
+        release_date=parsed_release_date,
+        imdb_url=movie.imdb_url,
+        plot_description=plot_description,
+        poster_image_url=poster_image_url,
+    )
+
+
+def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
+    calendar_url = IMDB_CALENDAR_URL_TEMPLATE.format(region=region)
+    logging.info("Scraping upcoming movies for region: %s", region)
+
+    with create_headless_chrome_driver() as chrome_driver:
+        try:
+            chrome_driver.get(calendar_url)
+            logging.debug("Loaded IMDB calendar page for region %s", region)
+
+            movie_links = collect_movie_links_from_calendar_page(chrome_driver)
+
+            scraped_movie_events: list[MovieCalendarEvent] = []
+
+            for movie_index, scheduled_movie in enumerate(movie_links, 1):
                 try:
-                    logging.info(
-                        f"Scraping movie {i}/{len(scheduled_movie_links)}: {movie_link.uri}"
+                    parsed_release_date = parse_imdb_release_date(
+                        scheduled_movie.release_date_text
                     )
-                    driver.get(movie_link.uri)
-
-                    try:
-                        hero_elem = driver.find_element(
-                            By.CSS_SELECTOR, '[data-testid="hero__primary-text"]'
-                        )
-                        summary = hero_elem.text.strip()
-                    except NoSuchElementException:
-                        logging.warning(
-                            f"Could not find title for movie: {movie_link.uri}"
-                        )
-                        summary = "Unknown Title"
-
-                    try:
-                        plot_elem = driver.find_element(
-                            By.CSS_SELECTOR, '[data-testid="plot-xl"]'
-                        )
-                        description = plot_elem.text.strip()
-                    except NoSuchElementException:
-                        logging.warning(
-                            f"Could not find plot for movie: {movie_link.uri}"
-                        )
-                        description = "No description available"
-
-                    scraped_movies.append(
-                        CalendarEvent(
-                            summary=summary,
-                            date=movie_link.release_date,
-                            uri=movie_link.uri,
-                            description=description,
-                        )
+                except ValueError:
+                    logging.error(
+                        "Could not parse date '%s' for movie '%s', skipping",
+                        scheduled_movie.release_date_text,
+                        scheduled_movie.title,
                     )
-
-                except WebDriverException as e:
-                    logging.error(f"Error scraping movie {movie_link.uri}: {e}")
                     continue
 
-            logging.info(f"Successfully scraped {len(scraped_movies)} movies")
-            return scraped_movies
+                logging.debug(
+                    "Scraping details for movie %d/%d: %s",
+                    movie_index,
+                    len(movie_links),
+                    scheduled_movie.title,
+                )
 
-        except WebDriverException as e:
-            logging.error(f"WebDriver error: {e}")
+                movie_event = scrape_movie_detail_page(
+                    chrome_driver, scheduled_movie
+                )
+                scraped_movie_events.append(movie_event)
+
+            logging.info(
+                "Successfully scraped %d movies", len(scraped_movie_events)
+            )
+            return scraped_movie_events
+
+        except WebDriverException as error:
+            logging.error("WebDriver error: %s", error)
             return []
 
 
-def create_ical_object(
-    scheduled_events: list[CalendarEvent], calendar_name: str = "Upcoming Movies"
+def build_icalendar_from_movie_events(
+    movie_events: list[MovieCalendarEvent],
+    calendar_name: str = DEFAULT_CALENDAR_NAME,
 ) -> Calendar:
-    """Create an iCalendar object from scheduled events."""
-    if not scheduled_events:
-        logging.warning("No events provided for calendar creation")
-
     logging.info(
-        f"Creating calendar '{calendar_name}' with {len(scheduled_events)} events"
+        "Creating calendar '%s' with %d events",
+        calendar_name,
+        len(movie_events),
     )
 
     calendar = Calendar()
@@ -177,87 +254,92 @@ def create_ical_object(
     calendar.add("version", "2.0")
     calendar.add("x-wr-calname", calendar_name)
 
-    for event_data in scheduled_events:
-        try:
-            start_date = datetime.strptime(event_data.date, "%b %d, %Y").date()
-            end_date = start_date + timedelta(days=1)
+    for movie_event in movie_events:
+        day_after_release = movie_event.release_date + timedelta(days=1)
 
-            event = Event()
-            event.add("dtstart", start_date)
-            event.add("dtend", end_date)
-            event.add("summary", event_data.summary)
-            event.add("description", event_data.description)
-            event.add("url", event_data.uri)
+        calendar_event = Event()
+        calendar_event.add(
+            "uid",
+            generate_calendar_event_uid(
+                movie_event.imdb_url, movie_event.release_date
+            ),
+        )
+        calendar_event.add("dtstart", movie_event.release_date)
+        calendar_event.add("dtend", day_after_release)
+        calendar_event.add("summary", movie_event.title)
+        calendar_event.add("description", movie_event.plot_description)
+        calendar_event.add("url", movie_event.imdb_url)
 
-            calendar.add_component(event)
-        except ValueError as e:
-            logging.error(
-                f"Error parsing date '{event_data.date}' for event '{event_data.summary}': {e}"
+        if movie_event.poster_image_url:
+            calendar_event.add(
+                "attach",
+                vUri(movie_event.poster_image_url),
+                parameters={"FMTTYPE": "image/jpeg"},
             )
-            continue
+
+        calendar.add_component(calendar_event)
 
     return calendar
 
 
 def save_calendar_to_file(
-    calendar: Calendar, filename: str = "upcoming_movies.ics"
+    calendar: Calendar, output_filepath: str = DEFAULT_OUTPUT_FILENAME
 ) -> None:
-    """Save calendar to file with error handling."""
     try:
-        with open(filename, "wb") as f:
-            f.write(calendar.to_ical())
-        logging.info(f"Calendar saved to {filename}")
-    except IOError as e:
-        logging.error(f"Error saving calendar to {filename}: {e}")
+        with open(output_filepath, "wb") as output_file:
+            output_file.write(calendar.to_ical())
+        logging.info("Calendar saved to %s", output_filepath)
+    except IOError as error:
+        logging.error("Error saving calendar to %s: %s", output_filepath, error)
         raise
 
 
-def parse_arguments() -> argparse.Namespace:
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(
+def parse_command_line_arguments() -> argparse.Namespace:
+    argument_parser = argparse.ArgumentParser(
         description="Scrape upcoming movies from IMDB and create an iCalendar file"
     )
-    parser.add_argument(
-        "--region", default="SE", help="IMDB region code (default: SE for Sweden)"
+    argument_parser.add_argument(
+        "--region",
+        default=DEFAULT_REGION,
+        help="IMDB region code (default: SE for Sweden)",
     )
-    parser.add_argument(
+    argument_parser.add_argument(
         "--output",
-        default="upcoming_movies.ics",
+        default=DEFAULT_OUTPUT_FILENAME,
         help="Output filename for the iCalendar file (default: upcoming_movies.ics)",
     )
-    parser.add_argument(
+    argument_parser.add_argument(
         "--calendar-name",
-        default="Upcoming Movies",
+        default=DEFAULT_CALENDAR_NAME,
         help="Name for the calendar (default: Upcoming Movies)",
     )
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-    return parser.parse_args()
+    argument_parser.add_argument(
+        "--verbose", action="store_true", help="Enable verbose logging"
+    )
+    return argument_parser.parse_args()
 
 
 def main() -> None:
-    """Main function to scrape movies and create calendar."""
-    args = parse_arguments()
+    arguments = parse_command_line_arguments()
 
-    if args.verbose:
+    if arguments.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    try:
-        logging.info("Starting movie scraping process")
-        movies = scrape_imdb_upcoming_movies_by_region(args.region)
+    logging.info("Starting movie scraping process")
+    movie_events = scrape_upcoming_movies_from_imdb(arguments.region)
 
-        if not movies:
-            logging.warning("No movies found, calendar will be empty")
+    if not movie_events:
+        logging.warning("No movies found. Skipping calendar file creation.")
+        return
 
-        calendar = create_ical_object(movies, calendar_name=args.calendar_name)
-        save_calendar_to_file(calendar, args.output)
+    calendar = build_icalendar_from_movie_events(
+        movie_events, calendar_name=arguments.calendar_name
+    )
+    save_calendar_to_file(calendar, arguments.output)
 
-        logging.info(
-            f"Process completed successfully. Created calendar with {len(movies)} movies."
-        )
-
-    except Exception as e:
-        logging.error(f"An error occurred during execution: {e}")
-        raise
+    logging.info(
+        "Process completed. Created calendar with %d movies.", len(movie_events)
+    )
 
 
 if __name__ == "__main__":
