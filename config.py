@@ -25,6 +25,6 @@ DEFAULT_CONFIG = {
     "output_filename": "upcoming_movies.ics",
     "calendar_name": "Upcoming Movies",
     "headless": True,
-    "window_size": "1440,1035",
+    "window_size": "1440,900",
     "timeout": 10,
 }

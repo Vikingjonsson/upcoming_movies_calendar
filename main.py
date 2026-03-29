@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Generator, Optional
 
+from config import DEFAULT_CONFIG
 from icalendar import Calendar, Event, vUri
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, WebDriverException
@@ -26,13 +27,13 @@ IMDB_CALENDAR_URL_TEMPLATE = (
 IMDB_DATE_FORMAT = "%b %d, %Y"
 
 PAGE_LOAD_TIMEOUT_SECONDS = 30
-ELEMENT_WAIT_TIMEOUT_SECONDS = 10
+ELEMENT_WAIT_TIMEOUT_SECONDS = DEFAULT_CONFIG["timeout"]
 
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
-BROWSER_WINDOW_SIZE = "1440,900"
+BROWSER_WINDOW_SIZE = DEFAULT_CONFIG["window_size"]
 
 CALENDAR_SECTION_SELECTOR = '[data-testid="calendar-section"]'
 MOVIE_ENTRY_SELECTOR = '[data-testid="coming-soon-entry"]'
@@ -44,9 +45,9 @@ POSTER_IMAGE_SELECTOR = '[data-testid="hero-media__poster"] img'
 EVENT_UID_DOMAIN = "@upcoming-movies"
 EVENT_UID_HASH_LENGTH = 16
 
-DEFAULT_REGION = "SE"
-DEFAULT_OUTPUT_FILENAME = "upcoming_movies.ics"
-DEFAULT_CALENDAR_NAME = "Upcoming Movies"
+DEFAULT_REGION = DEFAULT_CONFIG["region"]
+DEFAULT_OUTPUT_FILENAME = DEFAULT_CONFIG["output_filename"]
+DEFAULT_CALENDAR_NAME = DEFAULT_CONFIG["calendar_name"]
 DEFAULT_DESCRIPTION = "No description available"
 
 
