@@ -13,6 +13,7 @@ from selenium.common.exceptions import NoSuchElementException, WebDriverExceptio
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
@@ -51,28 +52,6 @@ DEFAULT_CALENDAR_NAME = DEFAULT_CONFIG["calendar_name"]
 DEFAULT_DESCRIPTION = "No description available"
 
 
-@contextmanager
-def create_headless_chrome_driver() -> Generator[webdriver.Chrome, None, None]:
-    chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument(f"--window-size={BROWSER_WINDOW_SIZE}")
-    chrome_options.add_argument(f"--user-agent={BROWSER_USER_AGENT}")
-
-    chrome_driver = None
-    try:
-        chrome_service = ChromeService(ChromeDriverManager().install())
-        chrome_driver = webdriver.Chrome(
-            service=chrome_service, options=chrome_options
-        )
-        chrome_driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT_SECONDS)
-        yield chrome_driver
-    finally:
-        if chrome_driver:
-            chrome_driver.quit()
-
-
 @dataclass
 class ScheduledMovie:
     title: str
@@ -101,6 +80,70 @@ def generate_calendar_event_uid(imdb_url: str, release_date: date) -> str:
     return f"{hash_prefix}{EVENT_UID_DOMAIN}"
 
 
+def _build_chrome_options() -> Options:
+    chrome_options = Options()
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument(f"--window-size={BROWSER_WINDOW_SIZE}")
+    chrome_options.add_argument(f"--user-agent={BROWSER_USER_AGENT}")
+    return chrome_options
+
+
+@contextmanager
+def create_headless_chrome_driver() -> Generator[webdriver.Chrome, None, None]:
+    chrome_driver = None
+    try:
+        chrome_service = ChromeService(ChromeDriverManager().install())
+        chrome_driver = webdriver.Chrome(
+            service=chrome_service, options=_build_chrome_options()
+        )
+        chrome_driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT_SECONDS)
+        yield chrome_driver
+    finally:
+        if chrome_driver:
+            chrome_driver.quit()
+
+
+def _extract_movie_link_from_entry(
+    movie_entry: WebElement, release_date_text: str
+) -> Optional[ScheduledMovie]:
+    try:
+        title_element = movie_entry.find_element(
+            By.CLASS_NAME, MOVIE_TITLE_CLASS_NAME
+        )
+        movie_url = title_element.get_attribute("href")
+        movie_title = title_element.text.strip()
+        if movie_url and release_date_text and movie_title:
+            return ScheduledMovie(
+                title=movie_title,
+                release_date_text=release_date_text,
+                imdb_url=movie_url.strip(),
+            )
+    except NoSuchElementException:
+        logging.warning("Could not find movie title element")
+    return None
+
+
+def _extract_movies_from_section(section: WebElement) -> list[ScheduledMovie]:
+    try:
+        release_date_element = section.find_element(
+            By.CLASS_NAME, RELEASE_DATE_CLASS_NAME
+        )
+        release_date_text = release_date_element.text.strip()
+    except NoSuchElementException:
+        logging.warning("Could not find release date element in section")
+        return []
+
+    movie_entries = section.find_elements(By.CSS_SELECTOR, MOVIE_ENTRY_SELECTOR)
+    movies = []
+    for movie_entry in movie_entries:
+        movie_link = _extract_movie_link_from_entry(movie_entry, release_date_text)
+        if movie_link:
+            movies.append(movie_link)
+    return movies
+
+
 def collect_movie_links_from_calendar_page(
     driver: webdriver.Chrome,
 ) -> list[ScheduledMovie]:
@@ -110,45 +153,39 @@ def collect_movie_links_from_calendar_page(
             (By.CSS_SELECTOR, CALENDAR_SECTION_SELECTOR)
         )
     )
-
     logging.info("Found %d calendar sections", len(calendar_sections))
 
     movie_links: list[ScheduledMovie] = []
-
     for section in calendar_sections:
-        try:
-            release_date_element = section.find_element(
-                By.CLASS_NAME, RELEASE_DATE_CLASS_NAME
-            )
-            release_date_text = release_date_element.text.strip()
-
-            movie_entries = section.find_elements(
-                By.CSS_SELECTOR, MOVIE_ENTRY_SELECTOR
-            )
-
-            for movie_entry in movie_entries:
-                try:
-                    title_element = movie_entry.find_element(
-                        By.CLASS_NAME, MOVIE_TITLE_CLASS_NAME
-                    )
-                    movie_url = title_element.get_attribute("href")
-                    movie_title = title_element.text.strip()
-                    if movie_url and release_date_text and movie_title:
-                        movie_links.append(
-                            ScheduledMovie(
-                                title=movie_title,
-                                release_date_text=release_date_text,
-                                imdb_url=movie_url.strip(),
-                            )
-                        )
-                except NoSuchElementException:
-                    logging.warning("Could not find movie title element")
-
-        except NoSuchElementException:
-            logging.warning("Could not find release date element in section")
+        movie_links.extend(_extract_movies_from_section(section))
 
     logging.info("Found %d movies on calendar page", len(movie_links))
     return movie_links
+
+
+def _scrape_plot_description(driver: webdriver.Chrome, movie_title: str) -> str:
+    try:
+        element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
+        plot_element = element_wait.until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, PLOT_SELECTOR))
+        )
+        return plot_element.text.strip()
+    except WebDriverException:
+        logging.warning("Could not fetch description for '%s'", movie_title)
+        return DEFAULT_DESCRIPTION
+
+
+def _scrape_poster_image_url(
+    driver: webdriver.Chrome, movie_title: str
+) -> Optional[str]:
+    try:
+        poster_element = driver.find_element(
+            By.CSS_SELECTOR, POSTER_IMAGE_SELECTOR
+        )
+        return poster_element.get_attribute("src")
+    except NoSuchElementException:
+        logging.warning("Could not find poster for '%s'", movie_title)
+        return None
 
 
 def scrape_movie_detail_page(
@@ -160,26 +197,8 @@ def scrape_movie_detail_page(
 
     try:
         driver.get(movie.imdb_url)
-
-        try:
-            element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
-            plot_element = element_wait.until(
-                EC.presence_of_element_located(
-                    (By.CSS_SELECTOR, PLOT_SELECTOR)
-                )
-            )
-            plot_description = plot_element.text.strip()
-        except WebDriverException:
-            logging.warning("Could not fetch description for '%s'", movie.title)
-
-        try:
-            poster_element = driver.find_element(
-                By.CSS_SELECTOR, POSTER_IMAGE_SELECTOR
-            )
-            poster_image_url = poster_element.get_attribute("src")
-        except NoSuchElementException:
-            logging.warning("Could not find poster for '%s'", movie.title)
-
+        plot_description = _scrape_plot_description(driver, movie.title)
+        poster_image_url = _scrape_poster_image_url(driver, movie.title)
     except WebDriverException:
         logging.warning("Could not load detail page for '%s'", movie.title)
 
@@ -192,6 +211,35 @@ def scrape_movie_detail_page(
     )
 
 
+def _scrape_all_movie_details(
+    chrome_driver: webdriver.Chrome, movie_links: list[ScheduledMovie]
+) -> list[MovieCalendarEvent]:
+    scraped_movie_events: list[MovieCalendarEvent] = []
+
+    for movie_index, scheduled_movie in enumerate(movie_links, 1):
+        try:
+            parse_imdb_release_date(scheduled_movie.release_date_text)
+        except ValueError:
+            logging.error(
+                "Could not parse date '%s' for movie '%s', skipping",
+                scheduled_movie.release_date_text,
+                scheduled_movie.title,
+            )
+            continue
+
+        logging.debug(
+            "Scraping details for movie %d/%d: %s",
+            movie_index,
+            len(movie_links),
+            scheduled_movie.title,
+        )
+        scraped_movie_events.append(
+            scrape_movie_detail_page(chrome_driver, scheduled_movie)
+        )
+
+    return scraped_movie_events
+
+
 def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
     calendar_url = IMDB_CALENDAR_URL_TEMPLATE.format(region=region)
     logging.info("Scraping upcoming movies for region: %s", region)
@@ -202,33 +250,9 @@ def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
             logging.debug("Loaded IMDB calendar page for region %s", region)
 
             movie_links = collect_movie_links_from_calendar_page(chrome_driver)
-
-            scraped_movie_events: list[MovieCalendarEvent] = []
-
-            for movie_index, scheduled_movie in enumerate(movie_links, 1):
-                try:
-                    parsed_release_date = parse_imdb_release_date(
-                        scheduled_movie.release_date_text
-                    )
-                except ValueError:
-                    logging.error(
-                        "Could not parse date '%s' for movie '%s', skipping",
-                        scheduled_movie.release_date_text,
-                        scheduled_movie.title,
-                    )
-                    continue
-
-                logging.debug(
-                    "Scraping details for movie %d/%d: %s",
-                    movie_index,
-                    len(movie_links),
-                    scheduled_movie.title,
-                )
-
-                movie_event = scrape_movie_detail_page(
-                    chrome_driver, scheduled_movie
-                )
-                scraped_movie_events.append(movie_event)
+            scraped_movie_events = _scrape_all_movie_details(
+                chrome_driver, movie_links
+            )
 
             logging.info(
                 "Successfully scraped %d movies", len(scraped_movie_events)
@@ -238,6 +262,30 @@ def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
         except WebDriverException as error:
             logging.error("WebDriver error: %s", error)
             return []
+
+
+def _create_calendar_event_from_movie(movie_event: MovieCalendarEvent) -> Event:
+    day_after_release = movie_event.release_date + timedelta(days=1)
+
+    calendar_event = Event()
+    calendar_event.add(
+        "uid",
+        generate_calendar_event_uid(movie_event.imdb_url, movie_event.release_date),
+    )
+    calendar_event.add("dtstart", movie_event.release_date)
+    calendar_event.add("dtend", day_after_release)
+    calendar_event.add("summary", movie_event.title)
+    calendar_event.add("description", movie_event.plot_description)
+    calendar_event.add("url", movie_event.imdb_url)
+
+    if movie_event.poster_image_url:
+        calendar_event.add(
+            "attach",
+            vUri(movie_event.poster_image_url),
+            parameters={"FMTTYPE": "image/jpeg"},
+        )
+
+    return calendar_event
 
 
 def build_icalendar_from_movie_events(
@@ -256,29 +304,7 @@ def build_icalendar_from_movie_events(
     calendar.add("x-wr-calname", calendar_name)
 
     for movie_event in movie_events:
-        day_after_release = movie_event.release_date + timedelta(days=1)
-
-        calendar_event = Event()
-        calendar_event.add(
-            "uid",
-            generate_calendar_event_uid(
-                movie_event.imdb_url, movie_event.release_date
-            ),
-        )
-        calendar_event.add("dtstart", movie_event.release_date)
-        calendar_event.add("dtend", day_after_release)
-        calendar_event.add("summary", movie_event.title)
-        calendar_event.add("description", movie_event.plot_description)
-        calendar_event.add("url", movie_event.imdb_url)
-
-        if movie_event.poster_image_url:
-            calendar_event.add(
-                "attach",
-                vUri(movie_event.poster_image_url),
-                parameters={"FMTTYPE": "image/jpeg"},
-            )
-
-        calendar.add_component(calendar_event)
+        calendar.add_component(_create_calendar_event_from_movie(movie_event))
 
     return calendar
 
