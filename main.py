@@ -28,13 +28,13 @@ IMDB_CALENDAR_URL_TEMPLATE = (
 IMDB_DATE_FORMAT = "%b %d, %Y"
 
 PAGE_LOAD_TIMEOUT_SECONDS = 30
-ELEMENT_WAIT_TIMEOUT_SECONDS = DEFAULT_CONFIG["timeout"]
+ELEMENT_WAIT_TIMEOUT_SECONDS = float(str(DEFAULT_CONFIG["timeout"]))
 
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
-BROWSER_WINDOW_SIZE = DEFAULT_CONFIG["window_size"]
+BROWSER_WINDOW_SIZE = str(DEFAULT_CONFIG["window_size"])
 
 CALENDAR_SECTION_SELECTOR = '[data-testid="calendar-section"]'
 MOVIE_ENTRY_SELECTOR = '[data-testid="coming-soon-entry"]'
@@ -46,9 +46,9 @@ POSTER_IMAGE_SELECTOR = '[data-testid="hero-media__poster"] img'
 EVENT_UID_DOMAIN = "@upcoming-movies"
 EVENT_UID_HASH_LENGTH = 16
 
-DEFAULT_REGION = DEFAULT_CONFIG["region"]
-DEFAULT_OUTPUT_FILENAME = DEFAULT_CONFIG["output_filename"]
-DEFAULT_CALENDAR_NAME = DEFAULT_CONFIG["calendar_name"]
+DEFAULT_REGION = str(DEFAULT_CONFIG["region"])
+DEFAULT_OUTPUT_FILENAME = str(DEFAULT_CONFIG["output_filename"])
+DEFAULT_CALENDAR_NAME = str(DEFAULT_CONFIG["calendar_name"])
 DEFAULT_DESCRIPTION = "No description available"
 
 
@@ -87,6 +87,14 @@ def _build_chrome_options() -> Options:
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument(f"--window-size={BROWSER_WINDOW_SIZE}")
     chrome_options.add_argument(f"--user-agent={BROWSER_USER_AGENT}")
+
+    # ⚡ Bolt: Optimize page load times by using eager strategy (don't wait for all resources)
+    chrome_options.page_load_strategy = "eager"
+    # ⚡ Bolt: Disable image loading to significantly reduce bandwidth and load time
+    chrome_options.add_experimental_option(
+        "prefs", {"profile.managed_default_content_settings.images": 2}
+    )
+
     return chrome_options
 
 
@@ -189,9 +197,8 @@ def _scrape_poster_image_url(
 
 
 def scrape_movie_detail_page(
-    driver: webdriver.Chrome, movie: ScheduledMovie
+    driver: webdriver.Chrome, movie: ScheduledMovie, parsed_release_date: date
 ) -> MovieCalendarEvent:
-    parsed_release_date = parse_imdb_release_date(movie.release_date_text)
     plot_description = DEFAULT_DESCRIPTION
     poster_image_url = None
 
@@ -218,7 +225,8 @@ def _scrape_all_movie_details(
 
     for movie_index, scheduled_movie in enumerate(movie_links, 1):
         try:
-            parse_imdb_release_date(scheduled_movie.release_date_text)
+            # ⚡ Bolt: Cache parsed date to avoid redundant calculation in scrape_movie_detail_page
+            parsed_date = parse_imdb_release_date(scheduled_movie.release_date_text)
         except ValueError:
             logging.error(
                 "Could not parse date '%s' for movie '%s', skipping",
@@ -234,7 +242,7 @@ def _scrape_all_movie_details(
             scheduled_movie.title,
         )
         scraped_movie_events.append(
-            scrape_movie_detail_page(chrome_driver, scheduled_movie)
+            scrape_movie_detail_page(chrome_driver, scheduled_movie, parsed_date)
         )
 
     return scraped_movie_events
