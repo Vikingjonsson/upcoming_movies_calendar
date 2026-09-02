@@ -189,9 +189,8 @@ def _scrape_poster_image_url(
 
 
 def scrape_movie_detail_page(
-    driver: webdriver.Chrome, movie: ScheduledMovie
+    driver: webdriver.Chrome, movie: ScheduledMovie, parsed_release_date: date
 ) -> MovieCalendarEvent:
-    parsed_release_date = parse_imdb_release_date(movie.release_date_text)
     plot_description = DEFAULT_DESCRIPTION
     poster_image_url = None
 
@@ -218,7 +217,7 @@ def _scrape_all_movie_details(
 
     for movie_index, scheduled_movie in enumerate(movie_links, 1):
         try:
-            parse_imdb_release_date(scheduled_movie.release_date_text)
+            parsed_date = parse_imdb_release_date(scheduled_movie.release_date_text)
         except ValueError:
             logging.error(
                 "Could not parse date '%s' for movie '%s', skipping",
@@ -233,8 +232,13 @@ def _scrape_all_movie_details(
             len(movie_links),
             scheduled_movie.title,
         )
+
+        # ⚡ Bolt Optimization:
+        # We pass the pre-computed `parsed_date` to `scrape_movie_detail_page`
+        # instead of making the function parse it again.
+        # This saves O(N) redundant string formatting and exception handling.
         scraped_movie_events.append(
-            scrape_movie_detail_page(chrome_driver, scheduled_movie)
+            scrape_movie_detail_page(chrome_driver, scheduled_movie, parsed_date)
         )
 
     return scraped_movie_events
