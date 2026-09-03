@@ -173,12 +173,12 @@ def collect_movie_links_from_calendar_page(
 
 def _scrape_plot_description(driver: webdriver.Chrome, movie_title: str) -> str:
     try:
-        element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
-        plot_element = element_wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, PLOT_SELECTOR))
-        )
+        # ⚡ Bolt: Use direct find_element instead of WebDriverWait. Since page_load_strategy
+        # is 'eager', the DOM is already parsed. This avoids blocking for up to 10 seconds
+        # when a plot description doesn't exist (which is common for unreleased movies).
+        plot_element = driver.find_element(By.CSS_SELECTOR, PLOT_SELECTOR)
         return plot_element.text.strip()
-    except WebDriverException:
+    except NoSuchElementException:
         logging.warning("Could not fetch description for '%s'", movie_title)
         return DEFAULT_DESCRIPTION
 
