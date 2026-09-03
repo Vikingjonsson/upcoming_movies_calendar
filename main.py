@@ -113,59 +113,59 @@ def create_headless_chrome_driver() -> Generator[webdriver.Chrome, None, None]:
             chrome_driver.quit()
 
 
-def _extract_movie_link_from_entry(
-    movie_entry: WebElement, release_date_text: str
-) -> Optional[ScheduledMovie]:
-    try:
-        title_element = movie_entry.find_element(
-            By.CLASS_NAME, MOVIE_TITLE_CLASS_NAME
-        )
-        movie_url = title_element.get_attribute("href")
-        movie_title = title_element.text.strip()
-        if movie_url and release_date_text and movie_title:
-            return ScheduledMovie(
-                title=movie_title,
-                release_date_text=release_date_text,
-                imdb_url=movie_url.strip(),
-            )
-    except NoSuchElementException:
-        logging.warning("Could not find movie title element")
-    return None
-
-
-def _extract_movies_from_section(section: WebElement) -> list[ScheduledMovie]:
-    try:
-        release_date_element = section.find_element(
-            By.CLASS_NAME, RELEASE_DATE_CLASS_NAME
-        )
-        release_date_text = release_date_element.text.strip()
-    except NoSuchElementException:
-        logging.warning("Could not find release date element in section")
-        return []
-
-    movie_entries = section.find_elements(By.CSS_SELECTOR, MOVIE_ENTRY_SELECTOR)
-    movies = []
-    for movie_entry in movie_entries:
-        movie_link = _extract_movie_link_from_entry(movie_entry, release_date_text)
-        if movie_link:
-            movies.append(movie_link)
-    return movies
-
-
 def collect_movie_links_from_calendar_page(
     driver: webdriver.Chrome,
 ) -> list[ScheduledMovie]:
     element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
-    calendar_sections = element_wait.until(
+    element_wait.until(
         EC.presence_of_all_elements_located(
             (By.CSS_SELECTOR, CALENDAR_SECTION_SELECTOR)
         )
     )
-    logging.info("Found %d calendar sections", len(calendar_sections))
+
+    # ⚡ Bolt: Use a single JS execution to extract all movie data
+    # This avoids hundreds of IPC roundtrips caused by calling find_element,
+    # get_attribute, and .text in Python loops. We also use textContent
+    # instead of .innerText to avoid layout calculation overhead.
+    js_script = f"""
+    const sections = document.querySelectorAll('{CALENDAR_SECTION_SELECTOR}');
+    const results = [];
+    for (const section of sections) {{
+        const dateEl = section.querySelector('.{RELEASE_DATE_CLASS_NAME}');
+        if (!dateEl) continue;
+        const dateText = dateEl.textContent.trim();
+
+        const entries = section.querySelectorAll('{MOVIE_ENTRY_SELECTOR}');
+        for (const entry of entries) {{
+            const titleEl = entry.querySelector('.{MOVIE_TITLE_CLASS_NAME}');
+            if (!titleEl) continue;
+
+            const title = titleEl.textContent.trim();
+            const url = titleEl.getAttribute('href');
+
+            if (title && url && dateText) {{
+                results.push({{
+                    title: title,
+                    release_date_text: dateText,
+                    imdb_url: url.trim()
+                }});
+            }}
+        }}
+    }}
+    return results;
+    """
+
+    extracted_data = driver.execute_script(js_script)
 
     movie_links: list[ScheduledMovie] = []
-    for section in calendar_sections:
-        movie_links.extend(_extract_movies_from_section(section))
+    for data in extracted_data:
+        movie_links.append(
+            ScheduledMovie(
+                title=data["title"],
+                release_date_text=data["release_date_text"],
+                imdb_url=data["imdb_url"]
+            )
+        )
 
     logging.info("Found %d movies on calendar page", len(movie_links))
     return movie_links
