@@ -2,12 +2,8 @@ from datetime import date
 
 import pytest
 
-from main import (
-    MovieCalendarEvent,
-    build_icalendar_from_movie_events,
-    generate_calendar_event_uid,
-    parse_imdb_release_date,
-)
+from main import (MovieCalendarEvent, build_icalendar_from_movie_events,
+                  generate_calendar_event_uid, parse_imdb_release_date)
 
 
 class TestParseImdbReleaseDate:
@@ -115,9 +111,7 @@ class TestBuildIcalendarFromMovieEvents:
         assert "20260616" in calendar_text
 
     def test_event_contains_imdb_url(self):
-        movie_events = [
-            self._make_movie_event(imdb_url="https://imdb.com/title/tt999")
-        ]
+        movie_events = [self._make_movie_event(imdb_url="https://imdb.com/title/tt999")]
         calendar = build_icalendar_from_movie_events(movie_events)
         calendar_text = calendar.to_ical().decode()
 
