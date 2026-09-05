@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Generator, Optional
 
-from config import DEFAULT_CONFIG
 from icalendar import Calendar, Event, vUri
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.common.exceptions import (NoSuchElementException,
+                                        WebDriverException)
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
@@ -17,6 +17,8 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
+
+from config import DEFAULT_CONFIG
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -113,59 +115,59 @@ def create_headless_chrome_driver() -> Generator[webdriver.Chrome, None, None]:
             chrome_driver.quit()
 
 
-def _extract_movie_link_from_entry(
-    movie_entry: WebElement, release_date_text: str
-) -> Optional[ScheduledMovie]:
-    try:
-        title_element = movie_entry.find_element(
-            By.CLASS_NAME, MOVIE_TITLE_CLASS_NAME
-        )
-        movie_url = title_element.get_attribute("href")
-        movie_title = title_element.text.strip()
-        if movie_url and release_date_text and movie_title:
-            return ScheduledMovie(
-                title=movie_title,
-                release_date_text=release_date_text,
-                imdb_url=movie_url.strip(),
-            )
-    except NoSuchElementException:
-        logging.warning("Could not find movie title element")
-    return None
-
-
-def _extract_movies_from_section(section: WebElement) -> list[ScheduledMovie]:
-    try:
-        release_date_element = section.find_element(
-            By.CLASS_NAME, RELEASE_DATE_CLASS_NAME
-        )
-        release_date_text = release_date_element.text.strip()
-    except NoSuchElementException:
-        logging.warning("Could not find release date element in section")
-        return []
-
-    movie_entries = section.find_elements(By.CSS_SELECTOR, MOVIE_ENTRY_SELECTOR)
-    movies = []
-    for movie_entry in movie_entries:
-        movie_link = _extract_movie_link_from_entry(movie_entry, release_date_text)
-        if movie_link:
-            movies.append(movie_link)
-    return movies
-
-
 def collect_movie_links_from_calendar_page(
     driver: webdriver.Chrome,
 ) -> list[ScheduledMovie]:
     element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
-    calendar_sections = element_wait.until(
+    # Wait until calendar sections are present
+    element_wait.until(
         EC.presence_of_all_elements_located(
             (By.CSS_SELECTOR, CALENDAR_SECTION_SELECTOR)
         )
     )
-    logging.info("Found %d calendar sections", len(calendar_sections))
+
+    # ⚡ Bolt: Fetch entire movie list in bulk via JavaScript instead of hundreds of synchronous IPC roundtrips
+    script = f"""
+        const sections = document.querySelectorAll('{CALENDAR_SECTION_SELECTOR}');
+        const movies = [];
+
+        for (const section of sections) {{
+            const releaseDateElement = section.querySelector('.{RELEASE_DATE_CLASS_NAME}');
+            if (!releaseDateElement) continue;
+            const releaseDateText = releaseDateElement.textContent.trim();
+
+            const movieEntries = section.querySelectorAll('{MOVIE_ENTRY_SELECTOR}');
+            for (const entry of movieEntries) {{
+                const titleElement = entry.querySelector('.{MOVIE_TITLE_CLASS_NAME}');
+                if (titleElement) {{
+                    const title = titleElement.textContent.trim();
+                    const href = titleElement.href; // Native .href resolves to absolute URL
+
+                    if (title && href && releaseDateText) {{
+                        movies.push({{
+                            title: title,
+                            release_date_text: releaseDateText,
+                            imdb_url: href
+                        }});
+                    }}
+                }}
+            }}
+        }}
+
+        return movies;
+    """
+
+    movie_dicts = driver.execute_script(script)
 
     movie_links: list[ScheduledMovie] = []
-    for section in calendar_sections:
-        movie_links.extend(_extract_movies_from_section(section))
+    for m in movie_dicts:
+        movie_links.append(
+            ScheduledMovie(
+                title=m["title"],
+                release_date_text=m["release_date_text"],
+                imdb_url=m["imdb_url"],
+            )
+        )
 
     logging.info("Found %d movies on calendar page", len(movie_links))
     return movie_links
@@ -187,9 +189,7 @@ def _scrape_poster_image_url(
     driver: webdriver.Chrome, movie_title: str
 ) -> Optional[str]:
     try:
-        poster_element = driver.find_element(
-            By.CSS_SELECTOR, POSTER_IMAGE_SELECTOR
-        )
+        poster_element = driver.find_element(By.CSS_SELECTOR, POSTER_IMAGE_SELECTOR)
         return poster_element.get_attribute("src")
     except NoSuchElementException:
         logging.warning("Could not find poster for '%s'", movie_title)
@@ -258,13 +258,9 @@ def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
             logging.debug("Loaded IMDB calendar page for region %s", region)
 
             movie_links = collect_movie_links_from_calendar_page(chrome_driver)
-            scraped_movie_events = _scrape_all_movie_details(
-                chrome_driver, movie_links
-            )
+            scraped_movie_events = _scrape_all_movie_details(chrome_driver, movie_links)
 
-            logging.info(
-                "Successfully scraped %d movies", len(scraped_movie_events)
-            )
+            logging.info("Successfully scraped %d movies", len(scraped_movie_events))
             return scraped_movie_events
 
         except WebDriverException as error:
