@@ -2,12 +2,8 @@ from datetime import date
 
 import pytest
 
-from main import (
-    MovieCalendarEvent,
-    build_icalendar_from_movie_events,
-    generate_calendar_event_uid,
-    parse_imdb_release_date,
-)
+from main import (MovieCalendarEvent, build_icalendar_from_movie_events,
+                  generate_calendar_event_uid, parse_imdb_release_date)
 
 
 class TestParseImdbReleaseDate:
@@ -66,14 +62,20 @@ class TestGenerateCalendarEventUid:
 
 class TestBuildIcalendarFromMovieEvents:
     def _make_movie_event(self, **overrides) -> MovieCalendarEvent:
-        defaults = {
+        defaults: dict[str, str | date | None] = {
             "title": "Test Movie",
             "release_date": date(2026, 4, 1),
             "imdb_url": "https://imdb.com/title/tt123",
             "plot_description": "A test movie",
         }
         defaults.update(overrides)
-        return MovieCalendarEvent(**defaults)
+        return MovieCalendarEvent(
+            title=str(defaults["title"]),
+            release_date=defaults["release_date"], # type: ignore
+            imdb_url=str(defaults["imdb_url"]),
+            plot_description=str(defaults["plot_description"]),
+            poster_image_url=defaults.get("poster_image_url") # type: ignore
+        )
 
     def test_calendar_contains_movie_titles(self):
         movie_events = [
@@ -115,9 +117,7 @@ class TestBuildIcalendarFromMovieEvents:
         assert "20260616" in calendar_text
 
     def test_event_contains_imdb_url(self):
-        movie_events = [
-            self._make_movie_event(imdb_url="https://imdb.com/title/tt999")
-        ]
+        movie_events = [self._make_movie_event(imdb_url="https://imdb.com/title/tt999")]
         calendar = build_icalendar_from_movie_events(movie_events)
         calendar_text = calendar.to_ical().decode()
 
