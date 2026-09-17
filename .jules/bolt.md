@@ -1,3 +1,6 @@
 ## 2023-11-20 - [Selenium DOM extraction vs Image Loading]
 **Learning:** You don't need to load images to extract their URLs. Disabling image loading in Chrome preferences (`profile.managed_default_content_settings.images=2`) and setting `page_load_strategy='eager'` prevents browser bandwidth usage but leaves `<img>` tags and their `src` attributes fully intact for DOM extraction.
 **Action:** Always apply these settings when scraping raw data from DOM attributes without needing visual rendering.
+## 2026-09-16 - [Selenium Bulk DOM Extraction]
+**Learning:** Making multiple synchronous `find_element` or `.text` calls in Selenium results in slow IPC roundtrips. Instead of fetching element properties individually, passing a JavaScript script via `driver.execute_script()` to fetch data in bulk is much faster. When extracting text, use `.innerText` instead of `.textContent` for an exact 1:1 match with Selenium's element.text property (respecting CSS visibility). For resolving absolute URLs from anchor tags just like Selenium does with `.get_attribute('href')`, use the element's `.href` DOM property.
+**Action:** Use `execute_script` for scraping lists or tables in Selenium rather than iterating over WebElements, using `.innerText` and `.href` as direct mappings for Selenium properties.
