@@ -2,8 +2,12 @@ from datetime import date
 
 import pytest
 
-from main import (MovieCalendarEvent, build_icalendar_from_movie_events,
-                  generate_calendar_event_uid, parse_imdb_release_date)
+from main import (
+    MovieCalendarEvent,
+    build_icalendar_from_movie_events,
+    generate_calendar_event_uid,
+    parse_imdb_release_date,
+)
 
 
 class TestParseImdbReleaseDate:
@@ -69,7 +73,13 @@ class TestBuildIcalendarFromMovieEvents:
             "plot_description": "A test movie",
         }
         defaults.update(overrides)
-        return MovieCalendarEvent(**defaults)
+        return MovieCalendarEvent(
+            title=defaults.get("title"),  # type: ignore
+            release_date=defaults.get("release_date"),  # type: ignore
+            imdb_url=defaults.get("imdb_url"),  # type: ignore
+            plot_description=defaults.get("plot_description"),  # type: ignore
+            poster_image_url=defaults.get("poster_image_url"),  # type: ignore
+        )
 
     def test_calendar_contains_movie_titles(self):
         movie_events = [

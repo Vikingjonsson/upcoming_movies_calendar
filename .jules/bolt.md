@@ -4,3 +4,6 @@
 ## 2026-09-19 - [Optimizing DOM extraction with execute_script]
 **Learning:** Using Selenium's find_element and .text repeatedly incurs a massive IPC overhead due to multiple synchronous roundtrips between Python and the browser.
 **Action:** Prioritize using driver.execute_script() to fetch data in bulk via JavaScript instead of making multiple synchronous find_element calls, using .innerText and .href properties to match Selenium's native extraction perfectly.
+## 2026-09-21 - [Selenium execute_script and independent fallbacks]
+**Learning:** When combining independent DOM queries into a single `execute_script` to reduce Selenium IPC roundtrips, ensure that `WebDriverWait` timeouts on one element do not entirely skip the extraction of others if they are independently available.
+**Action:** Catch wait exceptions specifically (e.g., `WebDriverException`) and still execute the JavaScript block to preserve independent fallback mechanisms.
