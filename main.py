@@ -174,29 +174,6 @@ def collect_movie_links_from_calendar_page(
     return movie_links
 
 
-def _scrape_plot_description(driver: webdriver.Chrome, movie_title: str) -> str:
-    try:
-        element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
-        plot_element = element_wait.until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, PLOT_SELECTOR))
-        )
-        return plot_element.text.strip()
-    except WebDriverException:
-        logging.warning("Could not fetch description for '%s'", movie_title)
-        return DEFAULT_DESCRIPTION
-
-
-def _scrape_poster_image_url(
-    driver: webdriver.Chrome, movie_title: str
-) -> Optional[str]:
-    try:
-        poster_element = driver.find_element(By.CSS_SELECTOR, POSTER_IMAGE_SELECTOR)
-        return poster_element.get_attribute("src")
-    except NoSuchElementException:
-        logging.warning("Could not find poster for '%s'", movie_title)
-        return None
-
-
 def scrape_movie_detail_page(
     driver: webdriver.Chrome, movie: ScheduledMovie, parsed_release_date: date
 ) -> MovieCalendarEvent:
@@ -205,8 +182,37 @@ def scrape_movie_detail_page(
 
     try:
         driver.get(movie.imdb_url)
-        plot_description = _scrape_plot_description(driver, movie.title)
-        poster_image_url = _scrape_poster_image_url(driver, movie.title)
+
+        try:
+            element_wait = WebDriverWait(driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
+            element_wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, PLOT_SELECTOR))
+            )
+        except WebDriverException:
+            pass
+
+        # ⚡ Bolt: Bulk fetch plot and poster via JavaScript to eliminate massive IPC overhead
+        js_script = """
+        const plotEl = document.querySelector(arguments[0]);
+        const posterEl = document.querySelector(arguments[1]);
+
+        return {
+            plot: plotEl ? plotEl.innerText.trim() : null,
+            poster: posterEl ? posterEl.src : null
+        };
+        """
+
+        details = driver.execute_script(js_script, PLOT_SELECTOR, POSTER_IMAGE_SELECTOR)
+
+        plot_description = details.get("plot") or DEFAULT_DESCRIPTION
+        poster_image_url = details.get("poster") or None
+
+        if not details.get("plot"):
+            logging.warning("Could not fetch description for '%s'", movie.title)
+
+        if not details.get("poster"):
+            logging.warning("Could not find poster for '%s'", movie.title)
+
     except WebDriverException:
         logging.warning("Could not load detail page for '%s'", movie.title)
 
