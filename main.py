@@ -89,6 +89,11 @@ def _build_chrome_options() -> Options:
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument(f"--window-size={BROWSER_WINDOW_SIZE}")
     chrome_options.add_argument(f"--user-agent={BROWSER_USER_AGENT}")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option(
+        "excludeSwitches", ["enable-automation"]
+    )
+    chrome_options.add_experimental_option("useAutomationExtension", False)
 
     # ⚡ Bolt: Optimize page load times by using eager strategy (don't wait for all resources)
     chrome_options.page_load_strategy = "eager"
