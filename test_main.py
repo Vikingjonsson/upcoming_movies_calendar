@@ -1,9 +1,15 @@
 from datetime import date
+from typing import Optional
 
 import pytest
 
-from main import (MovieCalendarEvent, build_icalendar_from_movie_events,
-                  generate_calendar_event_uid, parse_imdb_release_date)
+from main import (
+    MovieCalendarEvent,
+    build_icalendar_from_movie_events,
+    generate_calendar_event_uid,
+    parse_imdb_release_date,
+    save_calendar_to_file,
+)
 
 
 class TestParseImdbReleaseDate:
@@ -61,15 +67,21 @@ class TestGenerateCalendarEventUid:
 
 
 class TestBuildIcalendarFromMovieEvents:
-    def _make_movie_event(self, **overrides) -> MovieCalendarEvent:
-        defaults = {
-            "title": "Test Movie",
-            "release_date": date(2026, 4, 1),
-            "imdb_url": "https://imdb.com/title/tt123",
-            "plot_description": "A test movie",
-        }
-        defaults.update(overrides)
-        return MovieCalendarEvent(**defaults)
+    def _make_movie_event(
+        self,
+        title: str = "Test Movie",
+        release_date: date = date(2026, 4, 1),
+        imdb_url: str = "https://imdb.com/title/tt123",
+        plot_description: str = "A test movie",
+        poster_image_url: Optional[str] = None,
+    ) -> MovieCalendarEvent:
+        return MovieCalendarEvent(
+            title=title,
+            release_date=release_date,
+            imdb_url=imdb_url,
+            plot_description=plot_description,
+            poster_image_url=poster_image_url,
+        )
 
     def test_calendar_contains_movie_titles(self):
         movie_events = [
@@ -139,3 +151,15 @@ class TestBuildIcalendarFromMovieEvents:
         calendar_text = calendar.to_ical().decode()
 
         assert "ATTACH" not in calendar_text
+
+
+class TestSaveCalendarToFile:
+    def test_save_calendar_to_file(self, tmp_path):
+        calendar = build_icalendar_from_movie_events([], calendar_name="Test")
+        output_file = tmp_path / "test_calendar.ics"
+        save_calendar_to_file(calendar, str(output_file))
+
+        assert output_file.exists()
+        content = output_file.read_bytes()
+        assert b"BEGIN:VCALENDAR" in content
+        assert b"Test" in content
