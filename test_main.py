@@ -163,3 +163,32 @@ class TestSaveCalendarToFile:
         content = output_file.read_bytes()
         assert b"BEGIN:VCALENDAR" in content
         assert b"Test" in content
+
+
+class TestParseScheduledMovieRecords:
+    def test_parse_valid_records(self):
+        from utils import parse_scheduled_movie_records
+
+        raw = [
+            {
+                "title": "Movie 1",
+                "release_date_text": "Oct 1, 2026",
+                "imdb_url": "https://imdb.com/title/tt111",
+            },
+            {
+                "title": "Movie 2",
+                "release_date_text": "Nov 5, 2026",
+                "imdb_url": "https://imdb.com/title/tt222",
+            },
+        ]
+        movies = parse_scheduled_movie_records(raw)
+        assert len(movies) == 2
+        assert movies[0].title == "Movie 1"
+        assert movies[0].release_date_text == "Oct 1, 2026"
+        assert movies[0].imdb_url == "https://imdb.com/title/tt111"
+        assert movies[1].title == "Movie 2"
+
+    def test_parse_empty_records(self):
+        from utils import parse_scheduled_movie_records
+
+        assert parse_scheduled_movie_records([]) == []
