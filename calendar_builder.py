@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 import logging
 from datetime import date, timedelta
@@ -43,7 +45,7 @@ def create_calendar_event_from_movie(movie_event: MovieCalendarEvent) -> Event:
     return calendar_event
 
 
-DEFAULT_CALENDAR_NAME = str(DEFAULT_CONFIG["calendar_name"])
+DEFAULT_CALENDAR_NAME: str = DEFAULT_CONFIG["calendar_name"]
 
 
 def build_icalendar_from_movie_events(
@@ -67,7 +69,7 @@ def build_icalendar_from_movie_events(
     return calendar
 
 
-DEFAULT_OUTPUT_FILENAME = str(DEFAULT_CONFIG["output_filename"])
+DEFAULT_OUTPUT_FILENAME: str = DEFAULT_CONFIG["output_filename"]
 
 
 def save_calendar_to_file(
