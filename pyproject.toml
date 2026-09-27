@@ -23,3 +23,7 @@ python_files = ["*_test.py", "test_*.py"]
 filterwarnings = [
     "ignore::urllib3.exceptions.NotOpenSSLWarning",
 ]
+
+[tool.pyright]
+extraPaths = ["src"]
+

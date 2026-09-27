@@ -12,42 +12,54 @@ A Python script that scrapes upcoming movie releases from IMDB and creates an iC
 
 ## Requirements
 
-- Python 3.7+
-- Firefox browser (for Selenium WebDriver)
+- Python 3.9+
+- Google Chrome browser (for Selenium WebDriver)
 - Required Python packages (see requirements.txt)
 
 ## Installation
 
 1. Clone this repository
 2. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 ## Usage
 
-### Using the convenience script (recommended):
+### Using the convenience script (recommended)
+
 ```bash
 ./run.sh
 ```
 
-### With custom options:
+### With custom options
+
 ```bash
 ./run.sh --region US --output us_movies.ics --calendar-name "US Movies" --verbose
 ```
 
-### Direct Python usage:
+### Direct Python usage
+
 ```bash
 python main.py
 ```
 
-### With virtual environment:
+### Running as a Python module
+
+```bash
+PYTHONPATH=src python -m upcoming_movies
+```
+
+### With virtual environment
+
 ```bash
 source venv/bin/activate
 python main.py --region US --output us_movies.ics --calendar-name "US Movies" --verbose
 ```
 
-### Command-line options:
+### Command-line options
+
 - `--region`: IMDB region code (default: SE for Sweden)
 - `--output`: Output filename for the iCalendar file (default: upcoming_movies.ics)
 - `--calendar-name`: Name for the calendar (default: Upcoming Movies)
@@ -66,6 +78,7 @@ python main.py --region US --output us_movies.ics --calendar-name "US Movies" --
 ## Output
 
 The script generates an .ics file that contains:
+
 - Movie titles as event summaries
 - Release dates as event dates
 - Movie plots as event descriptions
@@ -74,6 +87,7 @@ The script generates an .ics file that contains:
 ## Error Handling
 
 The script includes comprehensive error handling for:
+
 - Missing web elements
 - Network timeouts
 - WebDriver issues
@@ -83,6 +97,7 @@ The script includes comprehensive error handling for:
 ## Logging
 
 The script provides detailed logging information including:
+
 - Progress updates during scraping
 - Error messages with context
 - Summary of results
