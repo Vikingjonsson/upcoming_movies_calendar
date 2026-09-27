@@ -10,10 +10,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from upcoming_movies.browser import create_headless_chrome_driver
 from upcoming_movies.config import DEFAULT_CONFIG
-from upcoming_movies.date_utils import parse_imdb_release_date
 from upcoming_movies.models import MovieCalendarEvent, ScheduledMovie
+from upcoming_movies.scraping.browser import create_headless_chrome_driver
+from upcoming_movies.scraping.scraper_utils import parse_imdb_release_date
 
 ELEMENT_WAIT_TIMEOUT_SECONDS: float = DEFAULT_CONFIG["timeout"]
 

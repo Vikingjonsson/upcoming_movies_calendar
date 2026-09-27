@@ -3,39 +3,14 @@ from __future__ import annotations
 import argparse
 import logging
 
-from upcoming_movies.calendar_builder import (
+from upcoming_movies.calendar.builder import (
     DEFAULT_CALENDAR_NAME,
     DEFAULT_OUTPUT_FILENAME,
     build_icalendar_from_movie_events,
-    create_calendar_event_from_movie as _create_calendar_event_from_movie,
-    generate_calendar_event_uid,
     save_calendar_to_file,
 )
 from upcoming_movies.config import DEFAULT_CONFIG
-from upcoming_movies.date_utils import parse_imdb_release_date
-from upcoming_movies.models import MovieCalendarEvent, ScheduledMovie
-from upcoming_movies.scraper import scrape_upcoming_movies_from_imdb
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-# Re-exports for backwards compatibility
-__all__ = [
-    "DEFAULT_CALENDAR_NAME",
-    "DEFAULT_OUTPUT_FILENAME",
-    "DEFAULT_REGION",
-    "MovieCalendarEvent",
-    "ScheduledMovie",
-    "_create_calendar_event_from_movie",
-    "build_icalendar_from_movie_events",
-    "generate_calendar_event_uid",
-    "main",
-    "parse_command_line_arguments",
-    "parse_imdb_release_date",
-    "save_calendar_to_file",
-    "scrape_upcoming_movies_from_imdb",
-]
+from upcoming_movies.scraping.scraper import scrape_upcoming_movies_from_imdb
 
 DEFAULT_REGION: str = DEFAULT_CONFIG["region"]
 
@@ -68,6 +43,10 @@ def parse_command_line_arguments() -> argparse.Namespace:
 def main() -> None:
     arguments = parse_command_line_arguments()
 
+    log_level = logging.DEBUG if arguments.verbose else logging.INFO
+    logging.basicConfig(
+        level=log_level, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
     if arguments.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 

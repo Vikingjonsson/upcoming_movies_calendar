@@ -4,7 +4,7 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 from upcoming_movies.models import MovieCalendarEvent, ScheduledMovie
-from upcoming_movies.scraper import (
+from upcoming_movies.scraping.scraper import (
     RawMoviePayload,
     _scrape_all_movie_details,
     parse_scheduled_movie_records,
@@ -48,7 +48,9 @@ class TestScrapeAllMovieDetailsCaching:
             ),
         ]
 
-        with patch("upcoming_movies.scraper.scrape_movie_detail_page") as mock_scrape:
+        with patch(
+            "upcoming_movies.scraping.scraper.scrape_movie_detail_page"
+        ) as mock_scrape:
             mock_scrape.return_value = MovieCalendarEvent(
                 title="Movie A",
                 release_date=date(2026, 10, 1),
