@@ -192,3 +192,38 @@ class TestParseScheduledMovieRecords:
         from utils import parse_scheduled_movie_records
 
         assert parse_scheduled_movie_records([]) == []
+
+
+class TestScrapeAllMovieDetailsCaching:
+    def test_deduplicates_page_loads_for_same_base_url(self):
+        from unittest.mock import MagicMock, patch
+
+        from models import ScheduledMovie
+        from scraper import _scrape_all_movie_details
+
+        mock_driver = MagicMock()
+        movies = [
+            ScheduledMovie(
+                "Movie A", "Oct 1, 2026", "https://imdb.com/title/tt123?ref_=a"
+            ),
+            ScheduledMovie(
+                "Movie A (Wide)", "Oct 8, 2026", "https://imdb.com/title/tt123?ref_=b"
+            ),
+        ]
+
+        with patch("scraper.scrape_movie_detail_page") as mock_scrape:
+            mock_scrape.return_value = MovieCalendarEvent(
+                title="Movie A",
+                release_date=date(2026, 10, 1),
+                imdb_url="https://imdb.com/title/tt123?ref_=a",
+                plot_description="A cool movie",
+                poster_image_url="https://img.com/poster.jpg",
+            )
+            events = _scrape_all_movie_details(mock_driver, movies)
+
+            assert len(events) == 2
+            assert mock_scrape.call_count == 1
+            assert events[0].plot_description == "A cool movie"
+            assert events[1].plot_description == "A cool movie"
+            assert events[0].release_date == date(2026, 10, 1)
+            assert events[1].release_date == date(2026, 10, 8)
