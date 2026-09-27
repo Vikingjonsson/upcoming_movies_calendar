@@ -6,8 +6,8 @@ from datetime import date, timedelta
 
 from icalendar import Calendar, Event, vUri
 
-from config import DEFAULT_CONFIG
-from models import MovieCalendarEvent
+from upcoming_movies.config import DEFAULT_CONFIG
+from upcoming_movies.models import MovieCalendarEvent
 
 EVENT_UID_DOMAIN = "@upcoming-movies"
 EVENT_UID_HASH_LENGTH = 16

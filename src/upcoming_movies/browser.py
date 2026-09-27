@@ -8,7 +8,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 
-from config import DEFAULT_CONFIG
+from upcoming_movies.config import DEFAULT_CONFIG
 
 PAGE_LOAD_TIMEOUT_SECONDS: int = 30
 BROWSER_WINDOW_SIZE: str = DEFAULT_CONFIG["window_size"]

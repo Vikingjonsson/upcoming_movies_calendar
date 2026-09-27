@@ -2,42 +2,13 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
-
-from main import (
-    MovieCalendarEvent,
+from upcoming_movies.calendar_builder import (
     build_icalendar_from_movie_events,
     generate_calendar_event_uid,
-    parse_imdb_release_date,
     save_calendar_to_file,
 )
-from models import ScheduledMovie
-from scraper import (
-    RawMoviePayload,
-    _scrape_all_movie_details,
-    parse_scheduled_movie_records,
-)
-
-
-class TestParseImdbReleaseDate:
-    def test_standard_date(self) -> None:
-        assert parse_imdb_release_date("Mar 29, 2026") == date(2026, 3, 29)
-
-    def test_january_first(self) -> None:
-        assert parse_imdb_release_date("Jan 1, 2025") == date(2025, 1, 1)
-
-    def test_december_end(self) -> None:
-        assert parse_imdb_release_date("Dec 31, 2024") == date(2024, 12, 31)
-
-    def test_invalid_format_raises(self) -> None:
-        with pytest.raises(ValueError):
-            parse_imdb_release_date("2026-03-29")
-
-    def test_nonsense_raises(self) -> None:
-        with pytest.raises(ValueError):
-            parse_imdb_release_date("not a date")
+from upcoming_movies.models import MovieCalendarEvent
 
 
 class TestGenerateCalendarEventUid:
@@ -174,58 +145,3 @@ class TestSaveCalendarToFile:
         content = output_file.read_bytes()
         assert b"BEGIN:VCALENDAR" in content
         assert b"Test" in content
-
-
-class TestParseScheduledMovieRecords:
-    def test_parse_valid_records(self) -> None:
-        raw: list[RawMoviePayload] = [
-            {
-                "title": "Movie 1",
-                "release_date_text": "Oct 1, 2026",
-                "imdb_url": "https://imdb.com/title/tt111",
-            },
-            {
-                "title": "Movie 2",
-                "release_date_text": "Nov 5, 2026",
-                "imdb_url": "https://imdb.com/title/tt222",
-            },
-        ]
-        movies = parse_scheduled_movie_records(raw)
-        assert len(movies) == 2
-        assert movies[0].title == "Movie 1"
-        assert movies[0].release_date_text == "Oct 1, 2026"
-        assert movies[0].imdb_url == "https://imdb.com/title/tt111"
-        assert movies[1].title == "Movie 2"
-
-    def test_parse_empty_records(self) -> None:
-        assert parse_scheduled_movie_records([]) == []
-
-
-class TestScrapeAllMovieDetailsCaching:
-    def test_deduplicates_page_loads_for_same_base_url(self) -> None:
-        mock_driver = MagicMock()
-        movies = [
-            ScheduledMovie(
-                "Movie A", "Oct 1, 2026", "https://imdb.com/title/tt123?ref_=a"
-            ),
-            ScheduledMovie(
-                "Movie A (Wide)", "Oct 8, 2026", "https://imdb.com/title/tt123?ref_=b"
-            ),
-        ]
-
-        with patch("scraper.scrape_movie_detail_page") as mock_scrape:
-            mock_scrape.return_value = MovieCalendarEvent(
-                title="Movie A",
-                release_date=date(2026, 10, 1),
-                imdb_url="https://imdb.com/title/tt123?ref_=a",
-                plot_description="A cool movie",
-                poster_image_url="https://img.com/poster.jpg",
-            )
-            events = _scrape_all_movie_details(mock_driver, movies)
-
-            assert len(events) == 2
-            assert mock_scrape.call_count == 1
-            assert events[0].plot_description == "A cool movie"
-            assert events[1].plot_description == "A cool movie"
-            assert events[0].release_date == date(2026, 10, 1)
-            assert events[1].release_date == date(2026, 10, 8)
