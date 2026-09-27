@@ -5,6 +5,7 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 check_untyped_defs = true
+mypy_path = "src"
 
 [[tool.mypy.overrides]]
 module = [
@@ -16,7 +17,13 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-testpaths = ["test_main.py"]
+pythonpath = ["src"]
+testpaths = ["src"]
+python_files = ["*_test.py", "test_*.py"]
 filterwarnings = [
     "ignore::urllib3.exceptions.NotOpenSSLWarning",
 ]
+
+[tool.pyright]
+extraPaths = ["src"]
+
