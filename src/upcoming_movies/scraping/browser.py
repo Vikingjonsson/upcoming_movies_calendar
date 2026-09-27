@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -26,18 +26,12 @@ def build_chrome_options() -> Options:
     chrome_options.add_argument(f"--window-size={BROWSER_WINDOW_SIZE}")
     chrome_options.add_argument(f"--user-agent={BROWSER_USER_AGENT}")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_experimental_option(
-        "excludeSwitches", ["enable-automation"]
-    )
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option("useAutomationExtension", False)
-
-    # ⚡ Bolt: Optimize page load times by using eager strategy (don't wait for all resources)
     chrome_options.page_load_strategy = "eager"
-    # ⚡ Bolt: Disable image loading to significantly reduce bandwidth and load time
     chrome_options.add_experimental_option(
         "prefs", {"profile.managed_default_content_settings.images": 2}
     )
-
     return chrome_options
 
 

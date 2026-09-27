@@ -14,6 +14,8 @@ from upcoming_movies.scraping.scraper import scrape_upcoming_movies_from_imdb
 
 DEFAULT_REGION: str = DEFAULT_CONFIG["region"]
 
+logger = logging.getLogger(__name__)
+
 
 def parse_command_line_arguments() -> argparse.Namespace:
     argument_parser = argparse.ArgumentParser(
@@ -50,11 +52,11 @@ def main() -> None:
     if arguments.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    logging.info("Starting movie scraping process")
+    logger.info("Starting movie scraping process")
     movie_events = scrape_upcoming_movies_from_imdb(arguments.region)
 
     if not movie_events:
-        logging.warning("No movies found. Skipping calendar file creation.")
+        logger.warning("No movies found. Skipping calendar file creation.")
         return
 
     calendar = build_icalendar_from_movie_events(
@@ -62,7 +64,7 @@ def main() -> None:
     )
     save_calendar_to_file(calendar, arguments.output)
 
-    logging.info(
+    logger.info(
         "Process completed. Created calendar with %d movies.", len(movie_events)
     )
 

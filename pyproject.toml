@@ -27,3 +27,21 @@ filterwarnings = [
 [tool.pyright]
 extraPaths = ["src"]
 
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "B",
+    "LOG",
+]
+ignore = [
+    "DTZ007",
+]
+
+

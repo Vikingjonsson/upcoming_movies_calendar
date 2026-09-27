@@ -12,6 +12,8 @@ from upcoming_movies.models import MovieCalendarEvent
 EVENT_UID_DOMAIN = "@upcoming-movies"
 EVENT_UID_HASH_LENGTH = 16
 
+logger = logging.getLogger(__name__)
+
 
 def generate_calendar_event_uid(imdb_url: str, release_date: date) -> str:
     raw_identifier = f"{imdb_url}:{release_date.isoformat()}"
@@ -52,7 +54,7 @@ def build_icalendar_from_movie_events(
     movie_events: list[MovieCalendarEvent],
     calendar_name: str = DEFAULT_CALENDAR_NAME,
 ) -> Calendar:
-    logging.info(
+    logger.info(
         "Creating calendar '%s' with %d events",
         calendar_name,
         len(movie_events),
@@ -78,7 +80,7 @@ def save_calendar_to_file(
     try:
         with open(output_filepath, "wb") as output_file:
             output_file.write(calendar.to_ical())
-        logging.info("Calendar saved to %s", output_filepath)
-    except IOError as error:
-        logging.error("Error saving calendar to %s: %s", output_filepath, error)
+        logger.info("Calendar saved to %s", output_filepath)
+    except OSError as error:
+        logger.error("Error saving calendar to %s: %s", output_filepath, error)
         raise
