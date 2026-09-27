@@ -15,6 +15,8 @@ from upcoming_movies.models import MovieCalendarEvent, ScheduledMovie
 from upcoming_movies.scraping.browser import create_headless_chrome_driver
 from upcoming_movies.scraping.scraper_utils import parse_imdb_release_date
 
+logger = logging.getLogger(__name__)
+
 ELEMENT_WAIT_TIMEOUT_SECONDS: float = DEFAULT_CONFIG["timeout"]
 
 CALENDAR_SECTION_SELECTOR = '[data-testid="calendar-section"]'
@@ -98,7 +100,7 @@ def collect_movie_links_from_calendar_page(
     )
 
     movie_links = parse_scheduled_movie_records(raw_data)
-    logging.info("Found %d movies on calendar page", len(movie_links))
+    logger.info("Found %d movies on calendar page", len(movie_links))
     return movie_links
 
 
@@ -126,7 +128,8 @@ def scrape_movie_detail_page(
             # (e.g., extracting the poster even if the plot times out)
             pass
 
-        # ⚡ Bolt: Fetch detail page data in bulk via JavaScript to minimize IPC roundtrips
+        # ⚡ Bolt: Fetch detail page data in bulk via JavaScript to minimize
+        # IPC roundtrips
         js_script = """
         const plotEl = document.querySelector(arguments[0]);
         const posterEl = document.querySelector(arguments[1]);
@@ -137,21 +140,19 @@ def scrape_movie_detail_page(
         """
         details = cast(
             RawDetailPayload,
-            driver.execute_script(
-                js_script, PLOT_SELECTOR, POSTER_IMAGE_SELECTOR
-            ),
+            driver.execute_script(js_script, PLOT_SELECTOR, POSTER_IMAGE_SELECTOR),
         )
 
         plot_description = details.get("plot") or DEFAULT_DESCRIPTION
         poster_image_url = details.get("poster") or None
 
         if plot_description == DEFAULT_DESCRIPTION:
-            logging.warning("Could not fetch description for '%s'", movie.title)
+            logger.warning("Could not fetch description for '%s'", movie.title)
         if not poster_image_url:
-            logging.warning("Could not find poster for '%s'", movie.title)
+            logger.warning("Could not find poster for '%s'", movie.title)
 
     except WebDriverException:
-        logging.warning("Could not load detail page for '%s'", movie.title)
+        logger.warning("Could not load detail page for '%s'", movie.title)
 
     return MovieCalendarEvent(
         title=movie.title,
@@ -170,10 +171,11 @@ def _scrape_all_movie_details(
 
     for movie_index, scheduled_movie in enumerate(movie_links, 1):
         try:
-            # ⚡ Bolt: Cache parsed date to avoid redundant calculation in scrape_movie_detail_page
+            # ⚡ Bolt: Cache parsed date to avoid redundant calculation
+            # in scrape_movie_detail_page
             parsed_date = parse_imdb_release_date(scheduled_movie.release_date_text)
         except ValueError:
-            logging.error(
+            logger.error(
                 "Could not parse date '%s' for movie '%s', skipping",
                 scheduled_movie.release_date_text,
                 scheduled_movie.title,
@@ -182,7 +184,7 @@ def _scrape_all_movie_details(
 
         base_url = scheduled_movie.imdb_url.split("?")[0]
         if base_url in movie_cache:
-            logging.debug(
+            logger.debug(
                 "Using cached details for movie %d/%d: %s",
                 movie_index,
                 len(movie_links),
@@ -199,7 +201,7 @@ def _scrape_all_movie_details(
                 )
             )
         else:
-            logging.debug(
+            logger.debug(
                 "Scraping details for movie %d/%d: %s",
                 movie_index,
                 len(movie_links),
@@ -221,19 +223,19 @@ IMDB_CALENDAR_URL_TEMPLATE = (
 
 def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
     calendar_url = IMDB_CALENDAR_URL_TEMPLATE.format(region=region)
-    logging.info("Scraping upcoming movies for region: %s", region)
+    logger.info("Scraping upcoming movies for region: %s", region)
 
     with create_headless_chrome_driver() as chrome_driver:
         try:
             chrome_driver.get(calendar_url)
-            logging.debug("Loaded IMDB calendar page for region %s", region)
+            logger.debug("Loaded IMDB calendar page for region %s", region)
 
             movie_links = collect_movie_links_from_calendar_page(chrome_driver)
             scraped_movie_events = _scrape_all_movie_details(chrome_driver, movie_links)
 
-            logging.info("Successfully scraped %d movies", len(scraped_movie_events))
+            logger.info("Successfully scraped %d movies", len(scraped_movie_events))
             return scraped_movie_events
 
         except WebDriverException as error:
-            logging.error("WebDriver error: %s", error)
+            logger.error("WebDriver error: %s", error)
             return []
