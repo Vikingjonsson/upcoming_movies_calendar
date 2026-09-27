@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime
 
 IMDB_DATE_FORMAT = "%b %d, %Y"

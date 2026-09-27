@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
 from typing import Generator
 
@@ -8,9 +10,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from config import DEFAULT_CONFIG
 
-PAGE_LOAD_TIMEOUT_SECONDS = 30
-BROWSER_WINDOW_SIZE = str(DEFAULT_CONFIG["window_size"])
-BROWSER_USER_AGENT = (
+PAGE_LOAD_TIMEOUT_SECONDS: int = 30
+BROWSER_WINDOW_SIZE: str = DEFAULT_CONFIG["window_size"]
+BROWSER_USER_AGENT: str = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )

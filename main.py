@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import logging
 
@@ -35,7 +37,7 @@ __all__ = [
     "scrape_upcoming_movies_from_imdb",
 ]
 
-DEFAULT_REGION = str(DEFAULT_CONFIG["region"])
+DEFAULT_REGION: str = DEFAULT_CONFIG["region"]
 
 
 def parse_command_line_arguments() -> argparse.Namespace:

@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
 
 
 @dataclass
@@ -16,4 +17,4 @@ class MovieCalendarEvent:
     release_date: date
     imdb_url: str
     plot_description: str
-    poster_image_url: Optional[str] = None
+    poster_image_url: str | None = None

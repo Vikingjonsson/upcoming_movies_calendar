@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from datetime import date
-from typing import Optional
+from typing import TypedDict, cast
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -13,7 +15,7 @@ from config import DEFAULT_CONFIG
 from date_utils import parse_imdb_release_date
 from models import MovieCalendarEvent, ScheduledMovie
 
-ELEMENT_WAIT_TIMEOUT_SECONDS = float(str(DEFAULT_CONFIG["timeout"]))
+ELEMENT_WAIT_TIMEOUT_SECONDS: float = DEFAULT_CONFIG["timeout"]
 
 CALENDAR_SECTION_SELECTOR = '[data-testid="calendar-section"]'
 MOVIE_ENTRY_SELECTOR = '[data-testid="coming-soon-entry"]'
@@ -21,8 +23,19 @@ MOVIE_TITLE_CLASS_NAME = "ipc-metadata-list-summary-item__t"
 RELEASE_DATE_CLASS_NAME = "ipc-title__text"
 
 
+class RawMoviePayload(TypedDict):
+    title: str
+    release_date_text: str
+    imdb_url: str
+
+
+class RawDetailPayload(TypedDict):
+    plot: str | None
+    poster: str | None
+
+
 def parse_scheduled_movie_records(
-    raw_records: list[dict[str, str]],
+    raw_records: list[RawMoviePayload],
 ) -> list[ScheduledMovie]:
     """Pure logic parsing raw DOM dicts into ScheduledMovie instances."""
     return [
@@ -73,15 +86,18 @@ def collect_movie_links_from_calendar_page(
     return results;
     """
 
-    movie_data = driver.execute_script(
-        js_script,
-        CALENDAR_SECTION_SELECTOR,
-        RELEASE_DATE_CLASS_NAME,
-        MOVIE_ENTRY_SELECTOR,
-        MOVIE_TITLE_CLASS_NAME,
+    raw_data = cast(
+        list[RawMoviePayload],
+        driver.execute_script(
+            js_script,
+            CALENDAR_SECTION_SELECTOR,
+            RELEASE_DATE_CLASS_NAME,
+            MOVIE_ENTRY_SELECTOR,
+            MOVIE_TITLE_CLASS_NAME,
+        ),
     )
 
-    movie_links = parse_scheduled_movie_records(movie_data)
+    movie_links = parse_scheduled_movie_records(raw_data)
     logging.info("Found %d movies on calendar page", len(movie_links))
     return movie_links
 
@@ -95,7 +111,7 @@ def scrape_movie_detail_page(
     driver: webdriver.Chrome, movie: ScheduledMovie, parsed_release_date: date
 ) -> MovieCalendarEvent:
     plot_description = DEFAULT_DESCRIPTION
-    poster_image_url = None
+    poster_image_url: str | None = None
 
     try:
         driver.get(movie.imdb_url)
@@ -119,7 +135,12 @@ def scrape_movie_detail_page(
             poster: posterEl ? posterEl.src : null
         };
         """
-        details = driver.execute_script(js_script, PLOT_SELECTOR, POSTER_IMAGE_SELECTOR)
+        details = cast(
+            RawDetailPayload,
+            driver.execute_script(
+                js_script, PLOT_SELECTOR, POSTER_IMAGE_SELECTOR
+            ),
+        )
 
         plot_description = details.get("plot") or DEFAULT_DESCRIPTION
         poster_image_url = details.get("poster") or None
@@ -145,7 +166,7 @@ def _scrape_all_movie_details(
     chrome_driver: webdriver.Chrome, movie_links: list[ScheduledMovie]
 ) -> list[MovieCalendarEvent]:
     scraped_movie_events: list[MovieCalendarEvent] = []
-    movie_cache: dict[str, tuple[str, Optional[str]]] = {}
+    movie_cache: dict[str, tuple[str, str | None]] = {}
 
     for movie_index, scheduled_movie in enumerate(movie_links, 1):
         try:
