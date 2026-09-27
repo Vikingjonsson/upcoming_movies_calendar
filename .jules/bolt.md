@@ -4,3 +4,6 @@
 ## 2026-09-19 - [Optimizing DOM extraction with execute_script]
 **Learning:** Using Selenium's find_element and .text repeatedly incurs a massive IPC overhead due to multiple synchronous roundtrips between Python and the browser.
 **Action:** Prioritize using driver.execute_script() to fetch data in bulk via JavaScript instead of making multiple synchronous find_element calls, using .innerText and .href properties to match Selenium's native extraction perfectly.
+## 2024-05-18 - [Caching IMDB Movie Details]
+**Learning:** IMDB often lists the same movie multiple times (e.g., limited vs. wide release) with identical content but varying query parameters (like `?ref_=...`). This causes redundant, slow browser navigations to fetch the exact same plot and poster details.
+**Action:** Always strip query parameters to normalize IMDB URLs, and cache the extracted details to prevent duplicate page loads and drastically reduce scraping time.

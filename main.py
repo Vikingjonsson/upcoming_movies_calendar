@@ -90,9 +90,7 @@ def _build_chrome_options() -> Options:
     chrome_options.add_argument(f"--window-size={BROWSER_WINDOW_SIZE}")
     chrome_options.add_argument(f"--user-agent={BROWSER_USER_AGENT}")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_experimental_option(
-        "excludeSwitches", ["enable-automation"]
-    )
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option("useAutomationExtension", False)
 
     # ⚡ Bolt: Optimize page load times by using eager strategy (don't wait for all resources)
@@ -234,6 +232,13 @@ def _scrape_all_movie_details(
 ) -> list[MovieCalendarEvent]:
     scraped_movie_events: list[MovieCalendarEvent] = []
 
+    # ⚡ Bolt: Cache movie details by normalized URL to avoid redundant page loads
+    # 💡 What: Introduced movie_cache dictionary to store plot and poster details keyed by normalized base URL.
+    # 🎯 Why: IMDB often lists the same movie multiple times (e.g., limited vs. wide release) with varying query parameters. This caused redundant, slow browser navigations.
+    # 📊 Impact: Significantly reduces overall scraping time by skipping duplicate page loads.
+    # 🔬 Measurement: Observe faster script execution overall; duplicate movie URLs (ignoring query parameters) will not trigger a new page load in scrape_movie_detail_page.
+    movie_cache: dict[str, tuple[str, Optional[str]]] = {}
+
     for movie_index, scheduled_movie in enumerate(movie_links, 1):
         try:
             # ⚡ Bolt: Cache parsed date to avoid redundant calculation in scrape_movie_detail_page
@@ -246,15 +251,35 @@ def _scrape_all_movie_details(
             )
             continue
 
-        logging.debug(
-            "Scraping details for movie %d/%d: %s",
-            movie_index,
-            len(movie_links),
-            scheduled_movie.title,
-        )
-        scraped_movie_events.append(
-            scrape_movie_detail_page(chrome_driver, scheduled_movie, parsed_date)
-        )
+        base_url = scheduled_movie.imdb_url.split("?")[0]
+        if base_url in movie_cache:
+            logging.debug(
+                "Using cached details for movie %d/%d: %s",
+                movie_index,
+                len(movie_links),
+                scheduled_movie.title,
+            )
+            plot_description, poster_image_url = movie_cache[base_url]
+            event = MovieCalendarEvent(
+                title=scheduled_movie.title,
+                release_date=parsed_date,
+                imdb_url=scheduled_movie.imdb_url,
+                plot_description=plot_description,
+                poster_image_url=poster_image_url,
+            )
+            scraped_movie_events.append(event)
+        else:
+            logging.debug(
+                "Scraping details for movie %d/%d: %s",
+                movie_index,
+                len(movie_links),
+                scheduled_movie.title,
+            )
+            event = scrape_movie_detail_page(
+                chrome_driver, scheduled_movie, parsed_date
+            )
+            scraped_movie_events.append(event)
+            movie_cache[base_url] = (event.plot_description, event.poster_image_url)
 
     return scraped_movie_events
 
