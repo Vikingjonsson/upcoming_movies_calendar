@@ -90,9 +90,7 @@ def _build_chrome_options() -> Options:
     chrome_options.add_argument(f"--window-size={BROWSER_WINDOW_SIZE}")
     chrome_options.add_argument(f"--user-agent={BROWSER_USER_AGENT}")
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_experimental_option(
-        "excludeSwitches", ["enable-automation"]
-    )
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
     chrome_options.add_experimental_option("useAutomationExtension", False)
 
     # ⚡ Bolt: Optimize page load times by using eager strategy (don't wait for all resources)
@@ -234,6 +232,9 @@ def _scrape_all_movie_details(
 ) -> list[MovieCalendarEvent]:
     scraped_movie_events: list[MovieCalendarEvent] = []
 
+    # ⚡ Bolt: Cache details using normalized URL to avoid redundant page loads for identical movies
+    movie_details_cache: dict[str, tuple[str, Optional[str]]] = {}
+
     for movie_index, scheduled_movie in enumerate(movie_links, 1):
         try:
             # ⚡ Bolt: Cache parsed date to avoid redundant calculation in scrape_movie_detail_page
@@ -252,9 +253,27 @@ def _scrape_all_movie_details(
             len(movie_links),
             scheduled_movie.title,
         )
-        scraped_movie_events.append(
-            scrape_movie_detail_page(chrome_driver, scheduled_movie, parsed_date)
-        )
+
+        normalized_url = scheduled_movie.imdb_url.split("?")[0]
+        if normalized_url in movie_details_cache:
+            plot_description, poster_image_url = movie_details_cache[normalized_url]
+            event = MovieCalendarEvent(
+                title=scheduled_movie.title,
+                release_date=parsed_date,
+                imdb_url=scheduled_movie.imdb_url,
+                plot_description=plot_description,
+                poster_image_url=poster_image_url,
+            )
+            scraped_movie_events.append(event)
+        else:
+            event = scrape_movie_detail_page(
+                chrome_driver, scheduled_movie, parsed_date
+            )
+            scraped_movie_events.append(event)
+            movie_details_cache[normalized_url] = (
+                event.plot_description,
+                event.poster_image_url,
+            )
 
     return scraped_movie_events
 
