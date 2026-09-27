@@ -12,8 +12,6 @@ from upcoming_movies.calendar.builder import (
 from upcoming_movies.config import DEFAULT_CONFIG
 from upcoming_movies.scraping.scraper import scrape_upcoming_movies_from_imdb
 
-__all__ = ["main"]
-
 DEFAULT_REGION: str = DEFAULT_CONFIG["region"]
 
 
