@@ -1,85 +1,56 @@
 import argparse
-import hashlib
 import logging
 from contextlib import contextmanager
-from dataclasses import dataclass
-from datetime import date, datetime, timedelta
-from typing import Generator, Optional
+from datetime import date
+from typing import Generator
 
-from icalendar import Calendar, Event, vUri
 from selenium import webdriver
-from selenium.common.exceptions import (NoSuchElementException,
-                                        WebDriverException)
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
+from calendar_builder import (
+    DEFAULT_CALENDAR_NAME,
+    DEFAULT_OUTPUT_FILENAME,
+    build_icalendar_from_movie_events,
+    create_calendar_event_from_movie as _create_calendar_event_from_movie,
+    generate_calendar_event_uid,
+    save_calendar_to_file,
+)
 from config import DEFAULT_CONFIG
+from date_utils import parse_imdb_release_date
+from models import MovieCalendarEvent, ScheduledMovie
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-IMDB_CALENDAR_URL_TEMPLATE = (
-    "https://www.imdb.com/calendar/?ref_=rlm&region={region}&type=MOVIE"
-)
-IMDB_DATE_FORMAT = "%b %d, %Y"
+# Re-exports for backward compatibility
+__all__ = [
+    "DEFAULT_CALENDAR_NAME",
+    "DEFAULT_OUTPUT_FILENAME",
+    "DEFAULT_REGION",
+    "MovieCalendarEvent",
+    "ScheduledMovie",
+    "_create_calendar_event_from_movie",
+    "build_icalendar_from_movie_events",
+    "generate_calendar_event_uid",
+    "parse_imdb_release_date",
+    "save_calendar_to_file",
+]
+
+# --- Chrome Driver Setup ---
 
 PAGE_LOAD_TIMEOUT_SECONDS = 30
-ELEMENT_WAIT_TIMEOUT_SECONDS = float(str(DEFAULT_CONFIG["timeout"]))
-
+BROWSER_WINDOW_SIZE = str(DEFAULT_CONFIG["window_size"])
 BROWSER_USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
-BROWSER_WINDOW_SIZE = str(DEFAULT_CONFIG["window_size"])
-
-CALENDAR_SECTION_SELECTOR = '[data-testid="calendar-section"]'
-MOVIE_ENTRY_SELECTOR = '[data-testid="coming-soon-entry"]'
-MOVIE_TITLE_CLASS_NAME = "ipc-metadata-list-summary-item__t"
-RELEASE_DATE_CLASS_NAME = "ipc-title__text"
-PLOT_SELECTOR = '[data-testid="plot-xl"]'
-POSTER_IMAGE_SELECTOR = '[data-testid="hero-media__poster"] img'
-
-EVENT_UID_DOMAIN = "@upcoming-movies"
-EVENT_UID_HASH_LENGTH = 16
-
-DEFAULT_REGION = str(DEFAULT_CONFIG["region"])
-DEFAULT_OUTPUT_FILENAME = str(DEFAULT_CONFIG["output_filename"])
-DEFAULT_CALENDAR_NAME = str(DEFAULT_CONFIG["calendar_name"])
-DEFAULT_DESCRIPTION = "No description available"
-
-
-@dataclass
-class ScheduledMovie:
-    title: str
-    release_date_text: str
-    imdb_url: str
-
-
-@dataclass
-class MovieCalendarEvent:
-    title: str
-    release_date: date
-    imdb_url: str
-    plot_description: str
-    poster_image_url: Optional[str] = None
-
-
-def parse_imdb_release_date(date_text: str) -> date:
-    return datetime.strptime(date_text, IMDB_DATE_FORMAT).date()
-
-
-def generate_calendar_event_uid(imdb_url: str, release_date: date) -> str:
-    raw_identifier = f"{imdb_url}:{release_date.isoformat()}"
-    hash_prefix = hashlib.sha256(raw_identifier.encode()).hexdigest()[
-        :EVENT_UID_HASH_LENGTH
-    ]
-    return f"{hash_prefix}{EVENT_UID_DOMAIN}"
 
 
 def _build_chrome_options() -> Options:
@@ -118,6 +89,16 @@ def create_headless_chrome_driver() -> Generator[webdriver.Chrome, None, None]:
     finally:
         if chrome_driver:
             chrome_driver.quit()
+
+
+# --- Scraping Logic ---
+
+ELEMENT_WAIT_TIMEOUT_SECONDS = float(str(DEFAULT_CONFIG["timeout"]))
+
+CALENDAR_SECTION_SELECTOR = '[data-testid="calendar-section"]'
+MOVIE_ENTRY_SELECTOR = '[data-testid="coming-soon-entry"]'
+MOVIE_TITLE_CLASS_NAME = "ipc-metadata-list-summary-item__t"
+RELEASE_DATE_CLASS_NAME = "ipc-title__text"
 
 
 def collect_movie_links_from_calendar_page(
@@ -177,6 +158,11 @@ def collect_movie_links_from_calendar_page(
 
     logging.info("Found %d movies on calendar page", len(movie_links))
     return movie_links
+
+
+DEFAULT_DESCRIPTION = "No description available"
+PLOT_SELECTOR = '[data-testid="plot-xl"]'
+POSTER_IMAGE_SELECTOR = '[data-testid="hero-media__poster"] img'
 
 
 def scrape_movie_detail_page(
@@ -259,6 +245,11 @@ def _scrape_all_movie_details(
     return scraped_movie_events
 
 
+IMDB_CALENDAR_URL_TEMPLATE = (
+    "https://www.imdb.com/calendar/?ref_=rlm&region={region}&type=MOVIE"
+)
+
+
 def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
     calendar_url = IMDB_CALENDAR_URL_TEMPLATE.format(region=region)
     logging.info("Scraping upcoming movies for region: %s", region)
@@ -279,61 +270,9 @@ def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
             return []
 
 
-def _create_calendar_event_from_movie(movie_event: MovieCalendarEvent) -> Event:
-    day_after_release = movie_event.release_date + timedelta(days=1)
+# --- CLI and Execution ---
 
-    calendar_event = Event()
-    calendar_event.add(
-        "uid",
-        generate_calendar_event_uid(movie_event.imdb_url, movie_event.release_date),
-    )
-    calendar_event.add("dtstart", movie_event.release_date)
-    calendar_event.add("dtend", day_after_release)
-    calendar_event.add("summary", movie_event.title)
-    calendar_event.add("description", movie_event.plot_description)
-    calendar_event.add("url", movie_event.imdb_url)
-
-    if movie_event.poster_image_url:
-        calendar_event.add(
-            "attach",
-            vUri(movie_event.poster_image_url),
-            parameters={"FMTTYPE": "image/jpeg"},
-        )
-
-    return calendar_event
-
-
-def build_icalendar_from_movie_events(
-    movie_events: list[MovieCalendarEvent],
-    calendar_name: str = DEFAULT_CALENDAR_NAME,
-) -> Calendar:
-    logging.info(
-        "Creating calendar '%s' with %d events",
-        calendar_name,
-        len(movie_events),
-    )
-
-    calendar = Calendar()
-    calendar.add("prodid", value="Upcoming Movies Calendar")
-    calendar.add("version", "2.0")
-    calendar.add("x-wr-calname", calendar_name)
-
-    for movie_event in movie_events:
-        calendar.add_component(_create_calendar_event_from_movie(movie_event))
-
-    return calendar
-
-
-def save_calendar_to_file(
-    calendar: Calendar, output_filepath: str = DEFAULT_OUTPUT_FILENAME
-) -> None:
-    try:
-        with open(output_filepath, "wb") as output_file:
-            output_file.write(calendar.to_ical())
-        logging.info("Calendar saved to %s", output_filepath)
-    except IOError as error:
-        logging.error("Error saving calendar to %s: %s", output_filepath, error)
-        raise
+DEFAULT_REGION = str(DEFAULT_CONFIG["region"])
 
 
 def parse_command_line_arguments() -> argparse.Namespace:
