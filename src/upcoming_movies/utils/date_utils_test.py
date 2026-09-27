@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from upcoming_movies.date_utils import parse_imdb_release_date
+from upcoming_movies.utils.date_utils import parse_imdb_release_date
 
 
 class TestParseImdbReleaseDate:

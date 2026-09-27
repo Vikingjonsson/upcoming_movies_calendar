@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 
-from upcoming_movies.calendar_builder import (
+from upcoming_movies.calendar.builder import (
     DEFAULT_CALENDAR_NAME,
     DEFAULT_OUTPUT_FILENAME,
     build_icalendar_from_movie_events,
@@ -12,9 +12,9 @@ from upcoming_movies.calendar_builder import (
     save_calendar_to_file,
 )
 from upcoming_movies.config import DEFAULT_CONFIG
-from upcoming_movies.date_utils import parse_imdb_release_date
 from upcoming_movies.models import MovieCalendarEvent, ScheduledMovie
-from upcoming_movies.scraper import scrape_upcoming_movies_from_imdb
+from upcoming_movies.scraping.scraper import scrape_upcoming_movies_from_imdb
+from upcoming_movies.utils.date_utils import parse_imdb_release_date
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
