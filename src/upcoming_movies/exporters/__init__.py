@@ -12,7 +12,12 @@ from upcoming_movies.exporters.ics_exporter import (
     build_icalendar_from_movie_events,
     save_calendar_to_file,
 )
-from upcoming_movies.exporters.json_exporter import save_json_to_file
+from upcoming_movies.exporters.json_exporter import (
+    load_json_from_file as load_json_from_file,
+)
+from upcoming_movies.exporters.json_exporter import (
+    save_json_to_file as save_json_to_file,
+)
 from upcoming_movies.models import MovieCalendarEvent
 
 logger = logging.getLogger(__name__)

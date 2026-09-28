@@ -1,3 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "upcoming-movies"
+version = "0.1.0"
+description = "Scrape upcoming movies from IMDB and export to multiple formats (ICS, JSON)"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "icalendar>=5.0.7",
+    "selenium>=4.10.0",
+    "webdriver-manager>=3.9.1",
+]
+
+[project.scripts]
+upcoming-movies = "upcoming_movies.main:main"
+
 [tool.mypy]
 python_version = "3.9"
 strict = true

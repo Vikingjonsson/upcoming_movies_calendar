@@ -26,62 +26,104 @@ A Python script that scrapes upcoming movie releases from IMDB and exports them 
 
    ```bash
    pip install -r requirements.txt
+   pip install -e .
    ```
+
+   This installs the `upcoming-movies` command directly into your environment.
 
 ## Usage
 
-### Interactive format selection
+You can use the installed `upcoming-movies` CLI command, `./run.sh`, or `python main.py`.
 
-If no format is specified, the script prompts you interactively:
+### Interactive Wizard
+
+Running without arguments in an interactive terminal launches the guided setup wizard, which steps through region, format, output path, and calendar name:
 
 ```bash
-./run.sh
+upcoming-movies
+# or:
+upcoming-movies wizard
 ```
 
 ```text
+🎬 Upcoming Movies Calendar & Exporter
+──────────────────────────────────────
+
+Welcome! Let's configure your movie export settings:
+
+Select IMDB region:
+  1) Sweden (SE) [default]
+  2) United States (US)
+  3) United Kingdom (GB)
+  4) Germany (DE)
+  5) France (FR)
+  6) Japan (JP)
+  7) Australia (AU)
+  8) Other custom 2-letter code
+Select region [1-8] (default: 1): 1
+
 Available output formats:
   1) iCalendar (.ics)     [shorthand: -f ics]
   2) JSON (.json)          [shorthand: -f json]
-Select format [1-2] (default: 1): 
+Select format [1-2] (default: 1): 1
+
+Output file path [upcoming_movies.ics]: 
+Calendar name [Upcoming Movies]: 
 ```
 
-### Export to JSON directly
+### Direct CLI Commands
+
+Export directly with flags:
 
 ```bash
-./run.sh -f json
+# Export to JSON for Sweden (default region)
+upcoming-movies -f json
+
+# Export to iCalendar (.ics) for the United States
+upcoming-movies -f ics -r US -o us_movies.ics
+
+# Limit export to 10 movies
+upcoming-movies -f json -r GB --limit 10
 ```
 
-### Export to iCalendar (.ics) directly
+### List Available Regions
+
+View popular and common IMDB region codes:
 
 ```bash
-./run.sh -f ics
+upcoming-movies regions
+# or:
+upcoming-movies --list-regions
 ```
 
-### With custom options
+### Convert Existing JSON to Calendar (No Scraping)
+
+If you already scraped movies to a JSON file, you can instantly convert it to iCalendar (`.ics`) without scraping IMDB again:
 
 ```bash
-./run.sh -f json --region US -o us_movies.json --verbose
+upcoming-movies export -i upcoming_movies.json -f ics -o calendar.ics
 ```
 
 ### Direct Python usage
 
 ```bash
-python main.py -f json
-```
-
-### Running as a Python module
-
-```bash
+python main.py -f json -r US
+./run.sh -f ics
 PYTHONPATH=src python -m upcoming_movies -f ics
 ```
 
 ### Command-line options
 
-- `-f, --format`: Output format (`ics` or `json`). Prompts interactively if omitted.
+- `-f, --format`: Output format (`ics` or `json`).
+- `-r, --region`: IMDB region code (default: `SE` for Sweden).
 - `-o, --output`: Output filename (default: `upcoming_movies.<format>`).
-- `--region`: IMDB region code (default: `SE` for Sweden).
-- `--calendar-name`: Name for the calendar when exporting to ICS (default: `Upcoming Movies`).
-- `--verbose`: Enable verbose debug logging.
+- `-c, --calendar-name`: Calendar name when exporting to ICS (default: `Upcoming Movies`).
+- `-i, --interactive`: Explicitly launch the interactive setup wizard.
+- `--no-prompt`: Run non-interactively using defaults for missing flags.
+- `--limit`: Limit number of movies to export.
+- `--no-table`: Suppress terminal summary table.
+- `-q, --quiet`: Quiet mode (only print generated output filepath).
+- `-v, --verbose`: Enable debug logging.
 
 ## Common Region Codes
 

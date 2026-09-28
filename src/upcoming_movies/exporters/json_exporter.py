@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TypedDict
+from datetime import date
+from typing import Any, TypedDict
 
 from upcoming_movies.models import MovieCalendarEvent
 
@@ -50,4 +51,35 @@ def save_json_to_file(
         )
     except OSError as error:
         logger.error("Error saving JSON to %s: %s", output_filepath, error)
+        raise
+
+
+def deserialize_movie_event(data: dict[str, Any]) -> MovieCalendarEvent:
+    """Convert a dictionary to a MovieCalendarEvent."""
+    return MovieCalendarEvent(
+        title=data["title"],
+        release_date=date.fromisoformat(data["release_date"]),
+        imdb_url=data["imdb_url"],
+        plot_description=data.get("plot_description", ""),
+        poster_image_url=data.get("poster_image_url"),
+    )
+
+
+def load_json_from_file(input_filepath: str) -> list[MovieCalendarEvent]:
+    """Load and deserialize movie events from a JSON file."""
+    try:
+        with open(input_filepath, encoding="utf-8") as input_file:
+            data = json.load(input_file)
+        if not isinstance(data, list):
+            raise ValueError(
+                f"Expected a JSON array of movies in {input_filepath}, "
+                f"got {type(data).__name__}"
+            )
+        movie_events = [deserialize_movie_event(item) for item in data]
+        logger.info(
+            "Loaded %d movies from JSON file %s", len(movie_events), input_filepath
+        )
+        return movie_events
+    except OSError as error:
+        logger.error("Error reading JSON from %s: %s", input_filepath, error)
         raise
