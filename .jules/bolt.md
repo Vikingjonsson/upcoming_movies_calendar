@@ -4,3 +4,6 @@
 ## 2026-09-19 - [Optimizing DOM extraction with execute_script]
 **Learning:** Using Selenium's find_element and .text repeatedly incurs a massive IPC overhead due to multiple synchronous roundtrips between Python and the browser.
 **Action:** Prioritize using driver.execute_script() to fetch data in bulk via JavaScript instead of making multiple synchronous find_element calls, using .innerText and .href properties to match Selenium's native extraction perfectly.
+## 2024-05-14 - [Date parsing caching]
+**Learning:** Parsing the same date strings repeatedly using datetime.strptime is an unnecessary overhead in Python loops.
+**Action:** Add @lru_cache when parsing dates from frequently repeated text formats to reduce duplicate computations.
