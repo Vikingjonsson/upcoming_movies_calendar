@@ -3,19 +3,13 @@
 
 from __future__ import annotations
 
+import runpy
 import sys
-import warnings
 from pathlib import Path
 
-# Suppress urllib3 NotOpenSSLWarning on LibreSSL
-warnings.filterwarnings("ignore", module="urllib3")
-
-# Add src to sys.path so the package can be run directly from repo root
-_src_dir = Path(__file__).resolve().parent / "src"
-if str(_src_dir) not in sys.path:
-    sys.path.insert(0, str(_src_dir))
-
-from upcoming_movies.main import main  # noqa: E402
-
 if __name__ == "__main__":
-    main()
+    src_dir = Path(__file__).resolve().parent / "src"
+    if str(src_dir) not in sys.path:
+        sys.path.insert(0, str(src_dir))
+
+    runpy.run_module("upcoming_movies", run_name="__main__")
