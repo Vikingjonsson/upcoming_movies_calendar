@@ -7,7 +7,8 @@ VENV_PYTHON="$VENV_DIR/bin/python"
 if [ ! -f "$VENV_PYTHON" ]; then
     echo "Virtual environment not found. Setting it up..."
     python3 -m venv "$VENV_DIR" && \
-        "$VENV_DIR/bin/pip" install --quiet -r "$SCRIPT_DIR/requirements.txt"
+        "$VENV_DIR/bin/pip" install --quiet -r "$SCRIPT_DIR/requirements.txt" && \
+        "$VENV_DIR/bin/pip" install --quiet -e "$SCRIPT_DIR"
 
     if [ $? -ne 0 ]; then
         echo "Failed to set up virtual environment."
