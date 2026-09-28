@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
-from upcoming_movies.calendar.builder import (
+from upcoming_movies.exporters.ics_exporter import (
     build_icalendar_from_movie_events,
     generate_calendar_event_uid,
     save_calendar_to_file,
