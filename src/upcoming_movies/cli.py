@@ -135,7 +135,7 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
         selected_format = prompt_output_format(default=DEFAULT_FORMAT)
 
     output_filepath = resolve_output_filename(selected_format, arguments.output)
-    region = arguments.region.upper()
+    region = (arguments.region or DEFAULT_CONFIG["region"]).upper()
     region_name = REGIONS.get(region, region)
 
     if not arguments.quiet:
@@ -145,6 +145,7 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
     try:
         movie_events = scrape_upcoming_movies_from_imdb(region)
     except Exception as exc:
+        logger.debug("Scraping failed with exception", exc_info=True)
         print(f"Error scraping movies: {exc}", file=sys.stderr)
         return 1
 
@@ -162,6 +163,7 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
             calendar_name=arguments.calendar_name,
         )
     except Exception as exc:
+        logger.debug("Export failed with exception", exc_info=True)
         print(f"Error exporting movies: {exc}", file=sys.stderr)
         return 1
 

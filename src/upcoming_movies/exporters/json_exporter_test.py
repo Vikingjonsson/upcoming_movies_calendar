@@ -145,4 +145,3 @@ class TestLoadJsonFromFile:
     def test_load_nonexistent_file(self) -> None:
         with pytest.raises(OSError):
             load_json_from_file("/nonexistent/file.json")
-

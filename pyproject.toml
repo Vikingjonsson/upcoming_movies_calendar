@@ -14,8 +14,22 @@ dependencies = [
     "webdriver-manager>=3.9.1",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.4.1",
+    "pytest>=7.0.0",
+    "ruff>=0.1.0",
+    "types-icalendar>=6.3.1",
+    "types-python-dateutil>=2.9.0",
+    "types-pytz>=2025.2.0",
+    "types-requests>=2.31.0",
+]
+
 [project.scripts]
 upcoming-movies = "upcoming_movies.main:main"
+
+[tool.setuptools.package-data]
+upcoming_movies = ["py.typed"]
 
 [tool.mypy]
 python_version = "3.9"
