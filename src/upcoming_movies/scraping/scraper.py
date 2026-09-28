@@ -31,9 +31,10 @@ class RawMoviePayload(TypedDict):
     imdb_url: str
 
 
-class RawDetailPayload(TypedDict):
+class RawDetailPayload(TypedDict, total=False):
     plot: str | None
     poster: str | None
+    genres: list[str]
 
 
 def parse_scheduled_movie_records(
@@ -107,6 +108,7 @@ def collect_movie_links_from_calendar_page(
 DEFAULT_DESCRIPTION = "No description available"
 PLOT_SELECTOR = '[data-testid="plot-xl"]'
 POSTER_IMAGE_SELECTOR = '[data-testid="hero-media__poster"] img'
+GENRES_SELECTOR = '[data-testid="genres"] a, a.ipc-chip--on-base'
 
 
 def scrape_movie_detail_page(
@@ -114,6 +116,7 @@ def scrape_movie_detail_page(
 ) -> MovieCalendarEvent:
     plot_description = DEFAULT_DESCRIPTION
     poster_image_url: str | None = None
+    genres: list[str] = []
 
     try:
         driver.get(movie.imdb_url)
@@ -133,18 +136,25 @@ def scrape_movie_detail_page(
         js_script = """
         const plotEl = document.querySelector(arguments[0]);
         const posterEl = document.querySelector(arguments[1]);
+        const genreEls = document.querySelectorAll(arguments[2]);
+        const genres = Array.from(genreEls)
+            .map(el => el.innerText.trim()).filter(Boolean);
         return {
             plot: plotEl ? plotEl.innerText.trim() : null,
-            poster: posterEl ? posterEl.src : null
+            poster: posterEl ? posterEl.src : null,
+            genres: genres
         };
         """
         details = cast(
             RawDetailPayload,
-            driver.execute_script(js_script, PLOT_SELECTOR, POSTER_IMAGE_SELECTOR),
+            driver.execute_script(
+                js_script, PLOT_SELECTOR, POSTER_IMAGE_SELECTOR, GENRES_SELECTOR
+            ),
         )
 
         plot_description = details.get("plot") or DEFAULT_DESCRIPTION
         poster_image_url = details.get("poster") or None
+        genres = details.get("genres") or []
 
         if plot_description == DEFAULT_DESCRIPTION:
             logger.warning("Could not fetch description for '%s'", movie.title)
@@ -160,6 +170,7 @@ def scrape_movie_detail_page(
         imdb_url=movie.imdb_url,
         plot_description=plot_description,
         poster_image_url=poster_image_url,
+        genres=genres,
     )
 
 
@@ -167,7 +178,7 @@ def _scrape_all_movie_details(
     chrome_driver: webdriver.Chrome, movie_links: list[ScheduledMovie]
 ) -> list[MovieCalendarEvent]:
     scraped_movie_events: list[MovieCalendarEvent] = []
-    movie_cache: dict[str, tuple[str, str | None]] = {}
+    movie_cache: dict[str, tuple[str, str | None, list[str]]] = {}
 
     for movie_index, scheduled_movie in enumerate(movie_links, 1):
         try:
@@ -190,7 +201,7 @@ def _scrape_all_movie_details(
                 len(movie_links),
                 scheduled_movie.title,
             )
-            plot_description, poster_image_url = movie_cache[base_url]
+            plot_description, poster_image_url, genres = movie_cache[base_url]
             scraped_movie_events.append(
                 MovieCalendarEvent(
                     title=scheduled_movie.title,
@@ -198,6 +209,7 @@ def _scrape_all_movie_details(
                     imdb_url=scheduled_movie.imdb_url,
                     plot_description=plot_description,
                     poster_image_url=poster_image_url,
+                    genres=genres,
                 )
             )
         else:
@@ -211,7 +223,11 @@ def _scrape_all_movie_details(
                 chrome_driver, scheduled_movie, parsed_date
             )
             scraped_movie_events.append(event)
-            movie_cache[base_url] = (event.plot_description, event.poster_image_url)
+            movie_cache[base_url] = (
+                event.plot_description,
+                event.poster_image_url,
+                event.genres,
+            )
 
     return scraped_movie_events
 
