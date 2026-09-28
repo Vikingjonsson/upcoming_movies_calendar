@@ -7,6 +7,7 @@ setup(
     version="0.1.0",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
+    package_data={"upcoming_movies": ["py.typed"]},
     entry_points={
         "console_scripts": [
             "upcoming-movies=upcoming_movies.main:main",
