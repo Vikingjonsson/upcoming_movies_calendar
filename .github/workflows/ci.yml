@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -16,10 +18,18 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Lint with ruff
+        run: ruff check .
+
+      - name: Check code formatting
+        run: ruff format --check .
 
       - name: Run tests
         run: pytest -v
 
       - name: Type check
-        run: mypy .
+        run: mypy src

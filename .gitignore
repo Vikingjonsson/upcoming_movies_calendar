@@ -17,7 +17,3 @@ upcoming_movies.json
 
 # macOS
 .DS_Store
-
-
-# Claude
-.claude/*.local.*
