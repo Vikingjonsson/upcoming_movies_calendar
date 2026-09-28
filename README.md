@@ -1,13 +1,16 @@
-# Upcoming Movies Calendar
+# Upcoming Movies Calendar & Exporter
 
-A Python script that scrapes upcoming movie releases from IMDB and creates an iCalendar (.ics) file that can be imported into calendar applications.
+A Python script that scrapes upcoming movie releases from IMDB and exports them to multiple formats, including iCalendar (.ics) and JSON (.json).
 
 ## Features
 
 - Scrapes upcoming movies from IMDB by region
-- Creates iCalendar files compatible with most calendar applications
+- Multi-format export:
+  - iCalendar (`.ics`) compatible with calendar applications (Apple Calendar, Google Calendar, Outlook)
+  - JSON (`.json`) for data interchange and downstream generation of other formats
+- Interactive format selection prompt when no parameters are provided
+- Shorthand command-line arguments for automated or script usage (`-f ics`, `-f json`)
 - Robust error handling and logging
-- Command-line interface with customizable options
 - Context manager for proper WebDriver cleanup
 
 ## Requirements
@@ -27,43 +30,58 @@ A Python script that scrapes upcoming movie releases from IMDB and creates an iC
 
 ## Usage
 
-### Using the convenience script (recommended)
+### Interactive format selection
+
+If no format is specified, the script prompts you interactively:
 
 ```bash
 ./run.sh
 ```
 
+```text
+Available output formats:
+  1) iCalendar (.ics)     [shorthand: -f ics]
+  2) JSON (.json)          [shorthand: -f json]
+Select format [1-2] (default: 1): 
+```
+
+### Export to JSON directly
+
+```bash
+./run.sh -f json
+```
+
+### Export to iCalendar (.ics) directly
+
+```bash
+./run.sh -f ics
+```
+
 ### With custom options
 
 ```bash
-./run.sh --region US --output us_movies.ics --calendar-name "US Movies" --verbose
+./run.sh -f json --region US -o us_movies.json --verbose
 ```
 
 ### Direct Python usage
 
 ```bash
-python main.py
+python main.py -f json
 ```
 
 ### Running as a Python module
 
 ```bash
-PYTHONPATH=src python -m upcoming_movies
-```
-
-### With virtual environment
-
-```bash
-source venv/bin/activate
-python main.py --region US --output us_movies.ics --calendar-name "US Movies" --verbose
+PYTHONPATH=src python -m upcoming_movies -f ics
 ```
 
 ### Command-line options
 
-- `--region`: IMDB region code (default: SE for Sweden)
-- `--output`: Output filename for the iCalendar file (default: upcoming_movies.ics)
-- `--calendar-name`: Name for the calendar (default: Upcoming Movies)
-- `--verbose`: Enable verbose logging
+- `-f, --format`: Output format (`ics` or `json`). Prompts interactively if omitted.
+- `-o, --output`: Output filename (default: `upcoming_movies.<format>`).
+- `--region`: IMDB region code (default: `SE` for Sweden).
+- `--calendar-name`: Name for the calendar when exporting to ICS (default: `Upcoming Movies`).
+- `--verbose`: Enable verbose debug logging.
 
 ## Common Region Codes
 
@@ -75,14 +93,33 @@ python main.py --region US --output us_movies.ics --calendar-name "US Movies" --
 - JP: Japan
 - AU: Australia
 
-## Output
+## Output Formats
 
-The script generates an .ics file that contains:
+### iCalendar (.ics)
+
+Generates an `.ics` file containing:
 
 - Movie titles as event summaries
 - Release dates as event dates
 - Movie plots as event descriptions
 - IMDB URLs for each movie
+- Movie poster images attached (when available)
+
+### JSON (.json)
+
+Generates a structured `.json` array of movie objects:
+
+```json
+[
+  {
+    "title": "Movie Title",
+    "release_date": "2026-10-01",
+    "imdb_url": "https://www.imdb.com/title/tt...",
+    "plot_description": "Movie plot summary...",
+    "poster_image_url": "https://m.media-amazon.com/images/..."
+  }
+]
+```
 
 ## Error Handling
 
@@ -103,11 +140,3 @@ The script provides detailed logging information including:
 - Summary of results
 
 Use the `--verbose` flag for additional debug information.
-
-## Example
-
-```bash
-python main.py --region SE --output swedish_movies.ics --calendar-name "Swedish Movie Releases"
-```
-
-This will create a calendar file with upcoming movie releases in Sweden.
