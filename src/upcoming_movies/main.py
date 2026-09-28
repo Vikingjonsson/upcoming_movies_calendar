@@ -4,11 +4,8 @@ import argparse
 import logging
 
 from upcoming_movies.calendar.builder import (
-    DEFAULT_CALENDAR_NAME,
-    DEFAULT_OUTPUT_FILENAME,
-    build_icalendar_from_movie_events,
-    save_calendar_to_file,
-)
+    DEFAULT_CALENDAR_NAME, DEFAULT_OUTPUT_FILENAME,
+    build_icalendar_from_movie_events, save_calendar_to_file)
 from upcoming_movies.config import DEFAULT_CONFIG
 from upcoming_movies.scraping.scraper import scrape_upcoming_movies_from_imdb
 

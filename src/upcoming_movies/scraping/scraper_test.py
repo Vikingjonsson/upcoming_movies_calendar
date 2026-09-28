@@ -4,11 +4,9 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 from upcoming_movies.models import MovieCalendarEvent, ScheduledMovie
-from upcoming_movies.scraping.scraper import (
-    RawMoviePayload,
-    _scrape_all_movie_details,
-    parse_scheduled_movie_records,
-)
+from upcoming_movies.scraping.scraper import (RawMoviePayload,
+                                              _scrape_all_movie_details,
+                                              parse_scheduled_movie_records)
 
 
 class TestParseScheduledMovieRecords:

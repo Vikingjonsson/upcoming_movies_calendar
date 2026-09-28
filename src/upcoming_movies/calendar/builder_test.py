@@ -4,10 +4,8 @@ from datetime import date
 from pathlib import Path
 
 from upcoming_movies.calendar.builder import (
-    build_icalendar_from_movie_events,
-    generate_calendar_event_uid,
-    save_calendar_to_file,
-)
+    build_icalendar_from_movie_events, generate_calendar_event_uid,
+    save_calendar_to_file)
 from upcoming_movies.models import MovieCalendarEvent
 
 
