@@ -14,6 +14,10 @@ from upcoming_movies.cli import (
     display_regions,
     main,
     parse_command_line_arguments,
+    prompt_card_carousel,
+    prompt_date_filter,
+    prompt_output_filepath,
+    prompt_region,
 )
 from upcoming_movies.models import MovieCalendarEvent
 
@@ -35,9 +39,15 @@ class TestCliArgParsing:
     def test_default_arguments(self) -> None:
         args = parse_command_line_arguments([])
         assert args.format is None
-        assert args.region == "SE"
+        assert args.region is None
         assert args.output is None
+        assert args.from_json is None
         assert args.calendar_name == "Upcoming Movies"
+        assert not args.today
+        assert not args.weekend
+        assert args.from_date is None
+        assert args.to_date is None
+        assert not args.carousel
         assert not args.list_regions
         assert not args.no_prompt
         assert not args.quiet
@@ -187,3 +197,118 @@ class TestCliMain:
         ):
             main()
         assert exc_info.value.code == 130
+
+    def test_from_json_offline_mode(self, tmp_path: Path) -> None:
+        json_file = tmp_path / "cache.json"
+        out_file = tmp_path / "cards.md"
+        json_file.write_text(
+            '[{"title": "Offline Movie", "release_date": "2026-05-10", '
+            '"imdb_url": "https://imdb.com/title/tt999", "plot_description": "P"}]',
+            encoding="utf-8",
+        )
+        exit_code = cli_main(
+            ["-i", str(json_file), "-f", "cards", "-o", str(out_file), "--no-prompt"]
+        )
+        assert exit_code == 0
+        assert out_file.exists()
+        assert "Offline Movie" in out_file.read_text(encoding="utf-8")
+
+    def test_invalid_from_date_format(self) -> None:
+        exit_code = cli_main(["--from-date", "invalid-date", "--no-prompt"])
+        assert exit_code == 1
+
+    def test_invalid_to_date_format(self) -> None:
+        exit_code = cli_main(["--to-date", "invalid-date", "--no-prompt"])
+        assert exit_code == 1
+
+    def test_weekend_flag_filtering(self, tmp_path: Path) -> None:
+        out_file = tmp_path / "weekend.json"
+        mock_movies = [
+            _make_test_movie("Weekday Movie", release_date=date(2026, 4, 15)),
+        ]
+        with patch(
+            "upcoming_movies.cli.scrape_upcoming_movies_from_imdb",
+            return_value=mock_movies,
+        ):
+            exit_code = cli_main(
+                ["-f", "json", "--weekend", "-o", str(out_file), "--no-prompt"]
+            )
+        assert exit_code == 0
+        assert not out_file.exists()
+
+
+class TestPromptHelpers:
+    def test_prompt_region_non_tty(self) -> None:
+        with patch("sys.stdin.isatty", return_value=False):
+            assert prompt_region() == "SE"
+
+    def test_prompt_region_numeric_choice(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="1"),
+        ):
+            assert prompt_region() == "US"
+
+    def test_prompt_region_custom_code(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="gb"),
+        ):
+            assert prompt_region() == "GB"
+
+    def test_prompt_region_empty_input_default(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value=""),
+        ):
+            assert prompt_region() == "SE"
+
+    def test_prompt_date_filter_all(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="1"),
+        ):
+            assert prompt_date_filter() == (None, None, False)
+
+    def test_prompt_date_filter_weekend(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="2"),
+        ):
+            assert prompt_date_filter() == (None, None, True)
+
+    def test_prompt_date_filter_today(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="3"),
+        ):
+            start, end, weekend = prompt_date_filter()
+            assert start == date.today()
+            assert end == date.today()
+            assert weekend is False
+
+    def test_prompt_card_carousel(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="2"),
+        ):
+            assert prompt_card_carousel() is True
+
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="1"),
+        ):
+            assert prompt_card_carousel() is False
+
+    def test_prompt_output_filepath(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="custom.json"),
+        ):
+            assert prompt_output_filepath("default.json") == "custom.json"
+
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value=""),
+        ):
+            assert prompt_output_filepath("default.json") == "default.json"

@@ -7,10 +7,25 @@ import sys
 from collections.abc import Callable
 from typing import Any, TypedDict
 
+from upcoming_movies.exporters.card_exporter import (
+    build_cards_from_movie_events as build_cards_from_movie_events,
+)
+from upcoming_movies.exporters.card_exporter import (
+    format_movie_card as format_movie_card,
+)
+from upcoming_movies.exporters.card_exporter import (
+    save_cards_to_file as save_cards_to_file,
+)
 from upcoming_movies.exporters.ics_exporter import (
     DEFAULT_CALENDAR_NAME,
     build_icalendar_from_movie_events,
     save_calendar_to_file,
+)
+from upcoming_movies.exporters.json_exporter import (
+    filter_movies_by_date as filter_movies_by_date,
+)
+from upcoming_movies.exporters.json_exporter import (
+    get_weekend_movies as get_weekend_movies,
 )
 from upcoming_movies.exporters.json_exporter import (
     load_json_from_file as load_json_from_file,
@@ -52,6 +67,19 @@ def _export_json(
     save_json_to_file(movie_events, output_filepath)
 
 
+def _export_cards(
+    movie_events: list[MovieCalendarEvent],
+    output_filepath: str,
+    *,
+    as_carousel: bool = False,
+    title: str = "Upcoming Movies",
+    **_kwargs: Any,
+) -> None:
+    save_cards_to_file(
+        movie_events, output_filepath, title=title, as_carousel=as_carousel
+    )
+
+
 SUPPORTED_FORMATS: dict[str, FormatDefinition] = {
     "ics": {
         "name": "iCalendar (.ics)",
@@ -67,9 +95,24 @@ SUPPORTED_FORMATS: dict[str, FormatDefinition] = {
         "shorthand": "json",
         "exporter": _export_json,
     },
+    "cards": {
+        "name": "Markdown Cards (.md)",
+        "extension": ".md",
+        "default_filename": "upcoming_movies.md",
+        "shorthand": "cards",
+        "exporter": _export_cards,
+    },
 }
 
 DEFAULT_FORMAT = "ics"
+
+
+def normalize_format(format_name: str) -> str:
+    """Normalize format name and aliases (e.g. 'card' -> 'cards')."""
+    lower = format_name.lower().strip()
+    if lower == "card":
+        return "cards"
+    return lower
 
 
 def prompt_output_format(default: str = DEFAULT_FORMAT) -> str:
@@ -98,9 +141,9 @@ def prompt_output_format(default: str = DEFAULT_FORMAT) -> str:
         if 0 <= idx < len(format_keys):
             return format_keys[idx]
 
-    # Match by key name or shorthand (e.g. "ics", "json")
-    if user_input in SUPPORTED_FORMATS:
-        return user_input
+    norm = normalize_format(user_input)
+    if norm in SUPPORTED_FORMATS:
+        return norm
 
     print(f"Unknown format '{user_input}', defaulting to '{default}'.")
     return default
@@ -110,10 +153,11 @@ def resolve_output_filename(format_name: str, custom_output: str | None = None) 
     """Resolve output filename based on selected format and user argument."""
     if custom_output:
         return custom_output
-    format_def = SUPPORTED_FORMATS.get(format_name)
+    norm_format = normalize_format(format_name)
+    format_def = SUPPORTED_FORMATS.get(norm_format)
     if format_def:
         return format_def["default_filename"]
-    return f"upcoming_movies.{format_name}"
+    return f"upcoming_movies.{norm_format}"
 
 
 def export_movie_events(
@@ -123,7 +167,8 @@ def export_movie_events(
     **kwargs: Any,
 ) -> None:
     """Export movie events using the handler for the specified format."""
-    format_def = SUPPORTED_FORMATS.get(format_name)
+    norm_format = normalize_format(format_name)
+    format_def = SUPPORTED_FORMATS.get(norm_format)
     if not format_def:
         supported = list(SUPPORTED_FORMATS.keys())
         raise ValueError(

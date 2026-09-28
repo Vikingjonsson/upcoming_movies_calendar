@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 
 
@@ -18,3 +18,4 @@ class MovieCalendarEvent:
     imdb_url: str
     plot_description: str
     poster_image_url: str | None = None
+    genres: list[str] = field(default_factory=list)

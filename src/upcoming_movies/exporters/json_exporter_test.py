@@ -9,6 +9,8 @@ import pytest
 from upcoming_movies.exporters.json_exporter import (
     build_json_from_movie_events,
     deserialize_movie_event,
+    filter_movies_by_date,
+    get_weekend_movies,
     load_json_from_file,
     save_json_to_file,
     serialize_movie_event,
@@ -22,6 +24,7 @@ def _make_movie_event(
     imdb_url: str = "https://imdb.com/title/tt123",
     plot_description: str = "A test movie plot",
     poster_image_url: str | None = "https://img.com/poster.jpg",
+    genres: list[str] | None = None,
 ) -> MovieCalendarEvent:
     return MovieCalendarEvent(
         title=title,
@@ -29,6 +32,7 @@ def _make_movie_event(
         imdb_url=imdb_url,
         plot_description=plot_description,
         poster_image_url=poster_image_url,
+        genres=genres or [],
     )
 
 
@@ -118,13 +122,32 @@ class TestDeserializeMovieEvent:
         assert event.release_date == date(2026, 8, 1)
         assert event.plot_description == ""
         assert event.poster_image_url is None
+        assert event.genres == []
+
+    def test_deserialize_with_genres(self) -> None:
+        data = {
+            "title": "Genre Movie",
+            "release_date": "2026-08-01",
+            "imdb_url": "https://imdb.com/title/tt789",
+            "genres": ["Action", "Sci-Fi"],
+        }
+        event = deserialize_movie_event(data)
+        assert event.genres == ["Action", "Sci-Fi"]
 
 
 class TestLoadJsonFromFile:
     def test_roundtrip_save_and_load(self, tmp_path: Path) -> None:
         original_events = [
-            _make_movie_event(title="Movie A", release_date=date(2026, 9, 1)),
-            _make_movie_event(title="Movie B", release_date=date(2026, 10, 1)),
+            _make_movie_event(
+                title="Movie A",
+                release_date=date(2026, 9, 1),
+                genres=["Drama"],
+            ),
+            _make_movie_event(
+                title="Movie B",
+                release_date=date(2026, 10, 1),
+                genres=["Comedy"],
+            ),
         ]
         file_path = tmp_path / "test.json"
         save_json_to_file(original_events, str(file_path))
@@ -133,8 +156,10 @@ class TestLoadJsonFromFile:
         assert len(loaded_events) == 2
         assert loaded_events[0].title == "Movie A"
         assert loaded_events[0].release_date == date(2026, 9, 1)
+        assert loaded_events[0].genres == ["Drama"]
         assert loaded_events[1].title == "Movie B"
         assert loaded_events[1].release_date == date(2026, 10, 1)
+        assert loaded_events[1].genres == ["Comedy"]
 
     def test_load_json_invalid_structure(self, tmp_path: Path) -> None:
         file_path = tmp_path / "invalid.json"
@@ -145,3 +170,65 @@ class TestLoadJsonFromFile:
     def test_load_nonexistent_file(self) -> None:
         with pytest.raises(OSError):
             load_json_from_file("/nonexistent/file.json")
+
+
+class TestFilterMoviesByDate:
+    def test_filter_within_range(self) -> None:
+        events = [
+            _make_movie_event(title="Early", release_date=date(2026, 4, 1)),
+            _make_movie_event(title="Middle", release_date=date(2026, 4, 15)),
+            _make_movie_event(title="Late", release_date=date(2026, 4, 30)),
+        ]
+        filtered = filter_movies_by_date(
+            events, start_date=date(2026, 4, 10), end_date=date(2026, 4, 20)
+        )
+        assert len(filtered) == 1
+        assert filtered[0].title == "Middle"
+
+    def test_filter_start_date_only(self) -> None:
+        events = [
+            _make_movie_event(title="Before", release_date=date(2026, 4, 1)),
+            _make_movie_event(title="After", release_date=date(2026, 4, 15)),
+        ]
+        filtered = filter_movies_by_date(events, start_date=date(2026, 4, 10))
+        assert len(filtered) == 1
+        assert filtered[0].title == "After"
+
+    def test_filter_end_date_only(self) -> None:
+        events = [
+            _make_movie_event(title="Before", release_date=date(2026, 4, 1)),
+            _make_movie_event(title="After", release_date=date(2026, 4, 15)),
+        ]
+        filtered = filter_movies_by_date(events, end_date=date(2026, 4, 10))
+        assert len(filtered) == 1
+        assert filtered[0].title == "Before"
+
+    def test_filter_no_dates_returns_all(self) -> None:
+        events = [_make_movie_event(title="One"), _make_movie_event(title="Two")]
+        assert len(filter_movies_by_date(events)) == 2
+
+
+class TestGetWeekendMovies:
+    def test_weekend_from_midweek_wednesday(self) -> None:
+        # 2026-04-15 is a Wednesday. Upcoming weekend: Fri 2026-04-17 to Sun 2026-04-19
+        wednesday = date(2026, 4, 15)
+        events = [
+            _make_movie_event(title="Thursday", release_date=date(2026, 4, 16)),
+            _make_movie_event(title="Friday", release_date=date(2026, 4, 17)),
+            _make_movie_event(title="Saturday", release_date=date(2026, 4, 18)),
+            _make_movie_event(title="Sunday", release_date=date(2026, 4, 19)),
+            _make_movie_event(title="Next Monday", release_date=date(2026, 4, 20)),
+        ]
+        weekend_movies = get_weekend_movies(events, reference_date=wednesday)
+        assert [m.title for m in weekend_movies] == ["Friday", "Saturday", "Sunday"]
+
+    def test_weekend_from_friday(self) -> None:
+        # 2026-04-17 is Friday. Weekend: Fri 2026-04-17 to Sun 2026-04-19
+        friday = date(2026, 4, 17)
+        events = [
+            _make_movie_event(title="Friday", release_date=date(2026, 4, 17)),
+            _make_movie_event(title="Sunday", release_date=date(2026, 4, 19)),
+            _make_movie_event(title="Next Week", release_date=date(2026, 4, 24)),
+        ]
+        weekend_movies = get_weekend_movies(events, reference_date=friday)
+        assert [m.title for m in weekend_movies] == ["Friday", "Sunday"]

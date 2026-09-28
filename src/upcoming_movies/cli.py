@@ -7,12 +7,18 @@ import logging
 import sys
 import warnings
 from collections.abc import Sequence
+from datetime import date
+from typing import Any
 
 from upcoming_movies.config import DEFAULT_CONFIG, REGIONS
 from upcoming_movies.exporters import (
     DEFAULT_FORMAT,
     SUPPORTED_FORMATS,
     export_movie_events,
+    filter_movies_by_date,
+    get_weekend_movies,
+    load_json_from_file,
+    normalize_format,
     prompt_output_format,
     resolve_output_filename,
 )
@@ -32,15 +38,136 @@ def display_regions() -> None:
     print("\nUse with: upcoming-movies -r <CODE> (e.g. upcoming-movies -r US)")
 
 
+def prompt_region(default: str = DEFAULT_CONFIG["region"]) -> str:
+    """Prompt user to interactively select an IMDB region code."""
+    print("\nSelect IMDB region:")
+    region_keys = list(REGIONS.keys())
+    for index, (code, name) in enumerate(REGIONS.items(), 1):
+        suffix = " (default)" if code == default else ""
+        print(f"  {index:>2}) {code} - {name}{suffix}")
+    print("      Or enter any country code (e.g. US, JP, IT, NO)")
+
+    if not sys.stdin.isatty():
+        return default
+
+    try:
+        prompt_msg = (
+            f"Select region [1-{len(region_keys)} or code] (default: {default}): "
+        )
+        user_input = input(prompt_msg).strip().upper()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return default
+
+    if not user_input:
+        return default
+
+    if user_input.isdigit():
+        idx = int(user_input) - 1
+        if 0 <= idx < len(region_keys):
+            return region_keys[idx]
+
+    return user_input
+
+
+def prompt_date_filter() -> tuple[date | None, date | None, bool]:
+    """Prompt user to interactively choose a date filter.
+
+    Returns:
+        tuple of (from_date, to_date, is_weekend)
+    """
+    print("\nSelect date filter:")
+    print("  1) All upcoming releases (default)")
+    print("  2) This weekend (Friday - Sunday)")
+    print("  3) Today's releases")
+    print("  4) Custom date range")
+
+    if not sys.stdin.isatty():
+        return (None, None, False)
+
+    try:
+        user_input = input("Select filter [1-4] (default: 1): ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return (None, None, False)
+
+    if user_input in ("", "1"):
+        return (None, None, False)
+
+    if user_input == "2":
+        return (None, None, True)
+
+    if user_input == "3":
+        today = date.today()
+        return (today, today, False)
+
+    if user_input == "4":
+        from_d: date | None = None
+        to_d: date | None = None
+        try:
+            from_str = input("  From date (YYYY-MM-DD) [empty for any]: ").strip()
+            if from_str:
+                from_d = date.fromisoformat(from_str)
+        except ValueError:
+            print("  Invalid date format, skipping start date limit.")
+
+        try:
+            to_str = input("  To date (YYYY-MM-DD) [empty for any]: ").strip()
+            if to_str:
+                to_d = date.fromisoformat(to_str)
+        except ValueError:
+            print("  Invalid date format, skipping end date limit.")
+
+        return (from_d, to_d, False)
+
+    return (None, None, False)
+
+
+def prompt_card_carousel() -> bool:
+    """Prompt whether to format cards as an Antigravity carousel."""
+    print("\nSelect card presentation style:")
+    print("  1) Standard markdown cards (default)")
+    print("  2) Antigravity carousel")
+
+    if not sys.stdin.isatty():
+        return False
+
+    try:
+        user_input = input("Select style [1-2] (default: 1): ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return False
+
+    return user_input == "2"
+
+
+def prompt_output_filepath(default_filename: str) -> str:
+    """Prompt user for custom output file path or accept default."""
+    if not sys.stdin.isatty():
+        return default_filename
+
+    try:
+        user_input = input(
+            f"\nOutput file path (default: {default_filename}): "
+        ).strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return default_filename
+
+    return user_input if user_input else default_filename
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the command-line argument parser."""
     parser = argparse.ArgumentParser(
         prog="upcoming-movies",
-        description="Scrape upcoming movies from IMDB and export to ICS or JSON.",
+        description="Scrape upcoming movies from IMDB and export to ICS/JSON/Cards.",
         epilog=(
             "examples:\n"
-            "  upcoming-movies                     # Prompt for format (interactive)\n"
+            "  upcoming-movies                     # Interactive mode (prompts)\n"
             "  upcoming-movies -f json             # Export to JSON (Sweden)\n"
+            "  upcoming-movies -f cards --weekend  # Export weekend movies as cards\n"
+            "  upcoming-movies -i data.json -f cards  # Convert cached JSON to cards\n"
             "  upcoming-movies -f ics -r US        # Export to ICS (United States)\n"
             "  upcoming-movies -f json -o out.json # Export to custom filename\n"
             "  upcoming-movies -l                  # List common region codes\n"
@@ -50,15 +177,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-f",
         "--format",
-        choices=list(SUPPORTED_FORMATS.keys()),
+        choices=list(SUPPORTED_FORMATS.keys()) + ["card"],
         default=None,
-        help="Output format ('ics' or 'json'). Prompts if omitted.",
+        help="Output format ('ics', 'json', or 'cards'). Prompts if omitted.",
     )
     parser.add_argument(
         "-r",
         "--region",
-        default=DEFAULT_CONFIG["region"],
-        help=f"IMDB region code (default: {DEFAULT_CONFIG['region']} for Sweden).",
+        default=None,
+        help="IMDB region code (e.g. SE, US, GB). Prompts if omitted.",
     )
     parser.add_argument(
         "-o",
@@ -67,10 +194,44 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output filename (default: upcoming_movies.<format>).",
     )
     parser.add_argument(
+        "-i",
+        "--from-json",
+        metavar="PATH",
+        default=None,
+        help="Load movies from an existing JSON file instead of scraping IMDB.",
+    )
+    parser.add_argument(
         "-c",
         "--calendar-name",
         default=DEFAULT_CALENDAR_NAME,
         help=f"Calendar name for ICS export (default: '{DEFAULT_CALENDAR_NAME}').",
+    )
+    parser.add_argument(
+        "--today",
+        action="store_true",
+        help="Filter movies releasing today.",
+    )
+    parser.add_argument(
+        "--weekend",
+        action="store_true",
+        help="Filter movies releasing on or around the upcoming weekend (Fri-Sun).",
+    )
+    parser.add_argument(
+        "--from-date",
+        metavar="YYYY-MM-DD",
+        default=None,
+        help="Filter movies releasing on or after this date (inclusive).",
+    )
+    parser.add_argument(
+        "--to-date",
+        metavar="YYYY-MM-DD",
+        default=None,
+        help="Filter movies releasing on or before this date (inclusive).",
+    )
+    parser.add_argument(
+        "--carousel",
+        action="store_true",
+        help="Format markdown cards as an Antigravity carousel (cards format only).",
     )
     parser.add_argument(
         "-l",
@@ -81,7 +242,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-prompt",
         action="store_true",
-        help="Do not prompt interactively; use default format (ics) if -f is omitted.",
+        help="Do not prompt interactively; use default values if flags are omitted.",
     )
     parser.add_argument(
         "-q",
@@ -126,41 +287,131 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
     else:
         logging.getLogger().setLevel(logging.WARNING)
 
-    # Determine format: CLI flag -> prompt (if interactive) -> default
-    if arguments.format:
-        selected_format = arguments.format
-    elif arguments.no_prompt or not sys.stdin.isatty():
-        selected_format = DEFAULT_FORMAT
-    else:
-        selected_format = prompt_output_format(default=DEFAULT_FORMAT)
+    is_interactive = sys.stdin.isatty() and not arguments.no_prompt
 
-    output_filepath = resolve_output_filename(selected_format, arguments.output)
-    region = (arguments.region or DEFAULT_CONFIG["region"]).upper()
+    # 1. Determine region
+    if arguments.region:
+        region = arguments.region.upper()
+    elif is_interactive:
+        region = prompt_region(default=DEFAULT_CONFIG["region"]).upper()
+    else:
+        region = DEFAULT_CONFIG["region"]
+
+    # 2. Determine format
+    if arguments.format:
+        selected_format = normalize_format(arguments.format)
+    elif is_interactive:
+        selected_format = prompt_output_format(default=DEFAULT_FORMAT)
+    else:
+        selected_format = DEFAULT_FORMAT
+
+    # 3. Determine carousel option for cards
+    is_carousel = arguments.carousel
+    if selected_format == "cards" and not arguments.carousel and is_interactive:
+        is_carousel = prompt_card_carousel()
+
+    # 4. Determine output filepath
+    default_filename = resolve_output_filename(selected_format)
+    if arguments.output:
+        output_filepath = arguments.output
+    elif is_interactive:
+        output_filepath = prompt_output_filepath(default_filename)
+    else:
+        output_filepath = default_filename
+
+    # 5. Determine date filters
+    parsed_from: date | None = None
+    parsed_to: date | None = None
+    is_weekend: bool = False
+
+    has_cli_date_filter = (
+        arguments.today
+        or arguments.weekend
+        or arguments.from_date is not None
+        or arguments.to_date is not None
+    )
+
+    if has_cli_date_filter:
+        if arguments.today:
+            today = date.today()
+            parsed_from = today
+            parsed_to = today
+        else:
+            if arguments.from_date:
+                try:
+                    parsed_from = date.fromisoformat(arguments.from_date)
+                except ValueError:
+                    print(
+                        f"Error: Invalid date for --from-date '{arguments.from_date}'. "
+                        "Use YYYY-MM-DD.",
+                        file=sys.stderr,
+                    )
+                    return 1
+            if arguments.to_date:
+                try:
+                    parsed_to = date.fromisoformat(arguments.to_date)
+                except ValueError:
+                    print(
+                        f"Error: Invalid date for --to-date '{arguments.to_date}'. "
+                        "Use YYYY-MM-DD.",
+                        file=sys.stderr,
+                    )
+                    return 1
+        is_weekend = arguments.weekend
+    elif is_interactive:
+        parsed_from, parsed_to, is_weekend = prompt_date_filter()
+
     region_name = REGIONS.get(region, region)
 
-    if not arguments.quiet:
-        print(f"Scraping upcoming movies from IMDB for {region_name} ({region})...")
+    if arguments.from_json:
+        if not arguments.quiet:
+            print(f"Loading movies from '{arguments.from_json}'...")
+        try:
+            movie_events = load_json_from_file(arguments.from_json)
+        except Exception as exc:
+            logger.debug("Loading from JSON failed with exception", exc_info=True)
+            print(
+                f"Error reading JSON file '{arguments.from_json}': {exc}",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        if not arguments.quiet:
+            print(f"Scraping upcoming movies from IMDB for {region_name} ({region})...")
 
-    logger.info("Starting movie scraping process for region: %s", region)
-    try:
-        movie_events = scrape_upcoming_movies_from_imdb(region)
-    except Exception as exc:
-        logger.debug("Scraping failed with exception", exc_info=True)
-        print(f"Error scraping movies: {exc}", file=sys.stderr)
-        return 1
+        logger.info("Starting movie scraping process for region: %s", region)
+        try:
+            movie_events = scrape_upcoming_movies_from_imdb(region)
+        except Exception as exc:
+            logger.debug("Scraping failed with exception", exc_info=True)
+            print(f"Error scraping movies: {exc}", file=sys.stderr)
+            return 1
+
+    if is_weekend:
+        movie_events = get_weekend_movies(movie_events)
+    elif parsed_from is not None or parsed_to is not None:
+        movie_events = filter_movies_by_date(
+            movie_events, start_date=parsed_from, end_date=parsed_to
+        )
 
     if not movie_events:
         logger.warning("No movies found. Skipping file creation.")
         if not arguments.quiet:
-            print(f"No upcoming movies found for region '{region}'.")
+            print("No matching movies found.")
         return 0
+
+    export_kwargs: dict[str, Any] = {
+        "calendar_name": arguments.calendar_name,
+    }
+    if selected_format == "cards":
+        export_kwargs["as_carousel"] = is_carousel
 
     try:
         export_movie_events(
             movie_events,
             format_name=selected_format,
             output_filepath=output_filepath,
-            calendar_name=arguments.calendar_name,
+            **export_kwargs,
         )
     except Exception as exc:
         logger.debug("Export failed with exception", exc_info=True)
