@@ -14,10 +14,16 @@ Use this skill when developing, testing, scraping, or exporting upcoming movie c
 # Interactive mode (prompts for region, format, date filter, style, and output file)
 ./venv/bin/upcoming-movies
 
-# Display movies as visual cards in terminal
+# Display movies as visual cards in terminal (auto-cached)
 ./venv/bin/upcoming-movies --card-view
 ./venv/bin/upcoming-movies -f terminal --weekend
-./venv/bin/upcoming-movies -i upcoming_movies.json --card-view
+./venv/bin/upcoming-movies -f terminal -r US
+
+# Force live re-scrape from IMDB (bypasses cache and updates it)
+./venv/bin/upcoming-movies --refresh -f terminal --weekend
+
+# Run completely without caching
+./venv/bin/upcoming-movies --no-cache -f terminal --today
 
 # Export Swedish releases to JSON
 ./venv/bin/upcoming-movies -f json -r SE

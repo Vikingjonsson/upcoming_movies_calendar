@@ -66,3 +66,47 @@ class TestScrapeAllMovieDetailsCaching:
             assert events[1].plot_description == "A cool movie"
             assert events[0].release_date == date(2026, 10, 1)
             assert events[1].release_date == date(2026, 10, 8)
+
+
+class TestScrapeViaNextData:
+    def test_parses_valid_next_data_payload(self) -> None:
+        mock_driver = MagicMock()
+        mock_driver.execute_async_script.return_value = {
+            "movies": [
+                {
+                    "id": "tt123",
+                    "title": "Fast Movie",
+                    "release_date_str": "Fri, 02 Oct 2026 00:00:00 GMT",
+                    "genres": ["Action", "Thriller"],
+                    "poster": "https://img.com/p.jpg",
+                    "imdb_url": "https://imdb.com/title/tt123/",
+                    "plot": "Fast plot",
+                }
+            ]
+        }
+        from upcoming_movies.scraping.scraper import _scrape_via_next_data
+
+        events = _scrape_via_next_data(mock_driver)
+        assert events is not None
+        assert len(events) == 1
+        assert events[0].title == "Fast Movie"
+        assert events[0].release_date == date(2026, 10, 2)
+        assert events[0].genres == ["Action", "Thriller"]
+        assert events[0].poster_image_url == "https://img.com/p.jpg"
+        assert events[0].plot_description == "Fast plot"
+
+    def test_returns_none_on_error(self) -> None:
+        mock_driver = MagicMock()
+        mock_driver.execute_async_script.return_value = {"error": "Failed"}
+        from upcoming_movies.scraping.scraper import _scrape_via_next_data
+
+        assert _scrape_via_next_data(mock_driver) is None
+
+    def test_returns_none_on_webdriver_exception(self) -> None:
+        from selenium.common.exceptions import WebDriverException
+
+        from upcoming_movies.scraping.scraper import _scrape_via_next_data
+
+        mock_driver = MagicMock()
+        mock_driver.execute_async_script.side_effect = WebDriverException("Timeout")
+        assert _scrape_via_next_data(mock_driver) is None
