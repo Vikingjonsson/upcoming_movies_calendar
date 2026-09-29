@@ -46,7 +46,10 @@ class TestFormatMovieCard:
         assert "**Release Date**: March 01, 2026 (Sunday)" in card
         assert "`Action` `Adventure` `Sci-Fi`" in card
         assert "Paul Atreides unites with Chani" in card
-        assert "🖼 Image: [Dune: Part Two Poster](https://imdb.com/title/tt15239678/)" in card
+        assert (
+            "🖼 Image: [Dune: Part Two Poster](https://imdb.com/title/tt15239678/)"
+            in card
+        )
 
     def test_format_card_without_poster_and_genres(self) -> None:
         event = _make_movie_event(poster_image_url=None, genres=[])

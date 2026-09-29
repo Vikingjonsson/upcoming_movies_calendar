@@ -203,6 +203,14 @@ class TestCliMain:
             main()
         assert exc_info.value.code == 130
 
+    def test_main_broken_pipe(self) -> None:
+        with (
+            patch("upcoming_movies.cli.cli_main", side_effect=BrokenPipeError),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+        assert exc_info.value.code == 0
+
     def test_from_json_offline_mode(self, tmp_path: Path) -> None:
         json_file = tmp_path / "cache.json"
         out_file = tmp_path / "cards.md"

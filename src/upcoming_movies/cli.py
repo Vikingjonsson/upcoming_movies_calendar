@@ -495,6 +495,8 @@ def main() -> None:
     except (KeyboardInterrupt, EOFError):
         print("\nAborted.")
         sys.exit(130)
+    except BrokenPipeError:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
