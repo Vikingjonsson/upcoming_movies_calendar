@@ -31,6 +31,12 @@ class TestNormalizeFormat:
         assert normalize_format("card") == "cards"
         assert normalize_format("CARD") == "cards"
 
+    def test_normalize_terminal(self) -> None:
+        assert normalize_format("terminal") == "terminal"
+        assert normalize_format("terminal-cards") == "terminal"
+        assert normalize_format("card-view") == "terminal"
+        assert normalize_format("term") == "terminal"
+
     def test_normalize_standard_formats(self) -> None:
         assert normalize_format("json") == "json"
         assert normalize_format("ics") == "ics"
@@ -42,6 +48,7 @@ class TestResolveOutputFilename:
         assert resolve_output_filename("json", "custom.json") == "custom.json"
         assert resolve_output_filename("ics", "custom.ics") == "custom.ics"
         assert resolve_output_filename("cards", "custom.md") == "custom.md"
+        assert resolve_output_filename("terminal", "custom.txt") == "custom.txt"
 
     def test_default_filename_for_ics(self) -> None:
         assert resolve_output_filename("ics") == "upcoming_movies.ics"
@@ -52,6 +59,10 @@ class TestResolveOutputFilename:
     def test_default_filename_for_cards(self) -> None:
         assert resolve_output_filename("cards") == "upcoming_movies.md"
         assert resolve_output_filename("card") == "upcoming_movies.md"
+
+    def test_default_filename_for_terminal(self) -> None:
+        assert resolve_output_filename("terminal") == "upcoming_movies_cards.txt"
+        assert resolve_output_filename("term") == "upcoming_movies_cards.txt"
 
     def test_unknown_format_fallback(self) -> None:
         assert resolve_output_filename("xml") == "upcoming_movies.xml"
@@ -82,6 +93,13 @@ class TestPromptOutputFormat:
             patch("builtins.input", return_value="2"),
         ):
             assert prompt_output_format() == "json"
+
+    def test_numeric_selection_four(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="4"),
+        ):
+            assert prompt_output_format() == "terminal"
 
     def test_name_selection(self) -> None:
         with (
@@ -129,6 +147,13 @@ class TestExportMovieEvents:
         export_movie_events([_make_movie()], "card", str(output_file))
         assert output_file.exists()
         assert "### 🎬 [Test Movie]" in output_file.read_text(encoding="utf-8")
+
+    def test_export_terminal(self, tmp_path: Path) -> None:
+        output_file = tmp_path / "terminal.txt"
+        export_movie_events([_make_movie()], "terminal", str(output_file))
+        assert output_file.exists()
+        content = output_file.read_text(encoding="utf-8")
+        assert "[1] 🎬 Test Movie  [MOVIE]" in content
 
     def test_unsupported_format_raises(self, tmp_path: Path) -> None:
         with pytest.raises(ValueError, match="Unsupported format"):
