@@ -10,6 +10,11 @@ from collections.abc import Sequence
 from datetime import date
 from typing import Any
 
+from upcoming_movies.cache import (
+    get_cached_movies,
+    get_stale_cached_movies,
+    save_cached_movies,
+)
 from upcoming_movies.config import DEFAULT_CONFIG, REGIONS
 from upcoming_movies.exporters import (
     DEFAULT_FORMAT,
@@ -24,6 +29,7 @@ from upcoming_movies.exporters import (
     resolve_output_filename,
 )
 from upcoming_movies.exporters.ics_exporter import DEFAULT_CALENDAR_NAME
+from upcoming_movies.models import MovieCalendarEvent
 from upcoming_movies.scraping.scraper import scrape_upcoming_movies_from_imdb
 
 logger = logging.getLogger(__name__)
@@ -265,6 +271,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Quiet mode: only output the resulting file path.",
     )
     parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Force refresh: bypass cached movie data and fetch fresh from IMDB.",
+    )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Bypass cache reading and writing completely.",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -331,11 +347,11 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
     output_filepath: str | None = None
     if arguments.output:
         output_filepath = arguments.output
+    elif selected_format == "terminal":
+        output_filepath = None
     elif is_interactive:
-        output_filepath = prompt_output_filepath(
-            default_filename, is_terminal=(selected_format == "terminal")
-        )
-    elif selected_format != "terminal":
+        output_filepath = prompt_output_filepath(default_filename, is_terminal=False)
+    else:
         output_filepath = default_filename
 
     # 5. Determine date filters
@@ -382,6 +398,8 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
 
     region_name = REGIONS.get(region, region)
 
+    movie_events: list[MovieCalendarEvent] = []
+
     if arguments.from_json:
         if not arguments.quiet:
             print(f"Loading movies from '{arguments.from_json}'...")
@@ -395,16 +413,50 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
             )
             return 1
     else:
-        if not arguments.quiet:
-            print(f"Scraping upcoming movies from IMDB for {region_name} ({region})...")
+        # Check automatic cache unless --refresh or --no-cache is requested
+        cached_events: list[MovieCalendarEvent] | None = None
+        if not arguments.no_cache and not arguments.refresh:
+            cached_events = get_cached_movies(region)
 
-        logger.info("Starting movie scraping process for region: %s", region)
-        try:
-            movie_events = scrape_upcoming_movies_from_imdb(region)
-        except Exception as exc:
-            logger.debug("Scraping failed with exception", exc_info=True)
-            print(f"Error scraping movies: {exc}", file=sys.stderr)
-            return 1
+        if cached_events is not None:
+            if not arguments.quiet:
+                print(
+                    f"Using cached releases for {region_name} ({region}) "
+                    f"({len(cached_events)} movies). Use --refresh to update."
+                )
+            movie_events = cached_events
+        else:
+            action_label = "Refreshing" if arguments.refresh else "Fetching"
+            if not arguments.quiet:
+                print(
+                    f"{action_label} upcoming movies from IMDB for "
+                    f"{region_name} ({region})..."
+                )
+
+            logger.info("Starting movie scraping process for region: %s", region)
+            scrape_failed = False
+            try:
+                movie_events = scrape_upcoming_movies_from_imdb(region)
+            except Exception as exc:
+                logger.debug("Scraping failed with exception", exc_info=True)
+                print(f"Error scraping movies: {exc}", file=sys.stderr)
+                scrape_failed = True
+
+            if scrape_failed and not arguments.no_cache:
+                # Try stale cache as fallback
+                stale_events = get_stale_cached_movies(region)
+                if stale_events:
+                    if not arguments.quiet:
+                        print(
+                            "Warning: Live fetch failed. "
+                            f"Falling back to cache ({len(stale_events)} movies).",
+                            file=sys.stderr,
+                        )
+                    movie_events = stale_events
+                else:
+                    return 1
+            elif not scrape_failed and not arguments.no_cache:
+                save_cached_movies(region, movie_events)
 
     if is_weekend:
         movie_events = get_weekend_movies(movie_events)

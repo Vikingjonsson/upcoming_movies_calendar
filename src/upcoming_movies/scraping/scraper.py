@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from typing import TypedDict, cast
+from typing import Any, TypedDict, cast
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -13,7 +13,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from upcoming_movies.config import DEFAULT_CONFIG
 from upcoming_movies.models import MovieCalendarEvent, ScheduledMovie
 from upcoming_movies.scraping.browser import create_headless_chrome_driver
-from upcoming_movies.scraping.scraper_utils import parse_imdb_release_date
+from upcoming_movies.scraping.scraper_utils import (
+    parse_flexible_release_date,
+    parse_imdb_release_date,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -232,6 +235,152 @@ def _scrape_all_movie_details(
     return scraped_movie_events
 
 
+class NextDataMoviePayload(TypedDict, total=False):
+    id: str
+    title: str
+    release_date_str: str
+    genres: list[str]
+    poster: str | None
+    imdb_url: str
+    plot: str | None
+
+
+def _scrape_via_next_data(
+    driver: webdriver.Chrome,
+) -> list[MovieCalendarEvent] | None:
+    """Fast-path scraper using IMDB's __NEXT_DATA__ and parallel plot fetching.
+
+    Extracts upcoming movies with posters, genres, and exact dates in 1 page load,
+    and batches plot queries in parallel inside the browser.
+    Returns None if __NEXT_DATA__ is unavailable.
+    """
+    js_script = """
+    const callback = arguments[arguments.length - 1];
+    let nextData = null;
+    try {
+        const el = document.getElementById("__NEXT_DATA__");
+        if (el && el.textContent) {
+            nextData = JSON.parse(el.textContent);
+        }
+    } catch (e) {
+        callback({ error: "Failed to parse __NEXT_DATA__" });
+        return;
+    }
+
+    const pageProps = nextData && nextData.props && nextData.props.pageProps;
+    if (!pageProps || !pageProps.groups) {
+        callback({ error: "No groups found in __NEXT_DATA__" });
+        return;
+    }
+
+    const groups = pageProps.groups;
+    const movies = [];
+    for (const g of groups) {
+        for (const e of g.entries || []) {
+            if (!e.id || !e.titleText) continue;
+            movies.push({
+                id: e.id,
+                title: e.titleText,
+                release_date_str: e.releaseDate || "",
+                genres: e.genres || [],
+                poster: e.imageModel ? e.imageModel.url : null,
+                imdb_url: "https://www.imdb.com/title/" + e.id + "/"
+            });
+        }
+    }
+
+    if (movies.length === 0) {
+        callback({ error: "No movies found in groups" });
+        return;
+    }
+
+    // Parallel fetch plots for upcoming releases (up to first 50)
+    const toFetch = movies.slice(0, 50);
+    async function fetchPlots() {
+        const results = {};
+        const chunkSize = 25;
+        for (let i = 0; i < toFetch.length; i += chunkSize) {
+            const chunk = toFetch.slice(i, i + chunkSize);
+            const chunkRes = await Promise.all(chunk.map(async m => {
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 3500);
+                try {
+                    const r = await fetch(
+                        "/title/" + m.id + "/", { signal: controller.signal }
+                    );
+                    clearTimeout(timer);
+                    const html = await r.text();
+                    const doc = new DOMParser().parseFromString(html, "text/html");
+                    const el = doc.querySelector("[data-testid='plot-xl']");
+                    return { id: m.id, plot: el ? el.innerText.trim() : null };
+                } catch (e) {
+                    clearTimeout(timer);
+                    return { id: m.id, plot: null };
+                }
+            }));
+            for (const item of chunkRes) {
+                results[item.id] = item.plot;
+            }
+        }
+        return results;
+    }
+
+    fetchPlots().then(plotMap => {
+        for (const m of movies) {
+            m.plot = plotMap[m.id] || "No description available";
+        }
+        callback({ movies: movies });
+    }).catch(err => {
+        callback({ movies: movies, warning: String(err) });
+    });
+    """
+
+    try:
+        raw_result = cast(
+            "dict[str, Any] | None",
+            driver.execute_async_script(js_script),
+        )
+    except WebDriverException as exc:
+        logger.debug("execute_async_script failed for NEXT_DATA: %s", exc)
+        return None
+
+    if not raw_result or "error" in raw_result:
+        logger.debug("NEXT_DATA extraction returned: %s", raw_result)
+        return None
+
+    raw_movies = cast("list[NextDataMoviePayload]", raw_result.get("movies", []))
+    events: list[MovieCalendarEvent] = []
+
+    for item in raw_movies:
+        date_str = item.get("release_date_str")
+        if not date_str:
+            continue
+        try:
+            rel_date = parse_flexible_release_date(date_str)
+        except Exception:
+            logger.debug(
+                "Could not parse date '%s' for '%s'",
+                date_str,
+                item.get("title"),
+            )
+            continue
+
+        plot_text = item.get("plot") or DEFAULT_DESCRIPTION
+        events.append(
+            MovieCalendarEvent(
+                title=item["title"],
+                release_date=rel_date,
+                imdb_url=item["imdb_url"],
+                plot_description=plot_text,
+                poster_image_url=item.get("poster"),
+                genres=item.get("genres", []),
+            )
+        )
+
+    logger.info("Extracted %d movies via NEXT_DATA fast path", len(events))
+    return events if events else None
+
+
 IMDB_CALENDAR_URL_TEMPLATE = (
     "https://www.imdb.com/calendar/?ref_=rlm&region={region}&type=MOVIE"
 )
@@ -243,13 +392,35 @@ def scrape_upcoming_movies_from_imdb(region: str) -> list[MovieCalendarEvent]:
 
     with create_headless_chrome_driver() as chrome_driver:
         try:
+            chrome_driver.set_script_timeout(30.0)
             chrome_driver.get(calendar_url)
             logger.debug("Loaded IMDB calendar page for region %s", region)
 
+            # Wait until either __NEXT_DATA__ or calendar-section is present
+            element_wait = WebDriverWait(chrome_driver, ELEMENT_WAIT_TIMEOUT_SECONDS)
+            script_check = (
+                "return !!document.getElementById('__NEXT_DATA__') || "
+                "document.querySelectorAll("
+                "'[data-testid=\"calendar-section\"]').length > 0"
+            )
+            element_wait.until(lambda d: d.execute_script(script_check))
+
+            # 1. Try fast-path via embedded NEXT_DATA
+            fast_events = _scrape_via_next_data(chrome_driver)
+            if fast_events:
+                logger.info(
+                    "Successfully scraped %d movies via fast-path", len(fast_events)
+                )
+                return fast_events
+
+            # 2. Fallback to DOM-based extraction
+            logger.info("NEXT_DATA not available; falling back to DOM extraction")
             movie_links = collect_movie_links_from_calendar_page(chrome_driver)
             scraped_movie_events = _scrape_all_movie_details(chrome_driver, movie_links)
 
-            logger.info("Successfully scraped %d movies", len(scraped_movie_events))
+            logger.info(
+                "Successfully scraped %d movies via fallback", len(scraped_movie_events)
+            )
             return scraped_movie_events
 
         except WebDriverException as error:

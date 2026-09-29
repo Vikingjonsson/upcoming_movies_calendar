@@ -35,6 +35,12 @@ def _make_test_movie(
     )
 
 
+@pytest.fixture(autouse=True)
+def isolate_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ensure tests run with an isolated, empty cache directory."""
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+
+
 class TestCliArgParsing:
     def test_default_arguments(self) -> None:
         args = parse_command_line_arguments([])
@@ -178,6 +184,68 @@ class TestCliMain:
         ):
             exit_code = cli_main(["-f", "ics", "--no-prompt"])
             assert exit_code == 1
+
+    def test_uses_cached_movies_if_fresh(self, tmp_path: Path) -> None:
+        from upcoming_movies.cache import save_cached_movies
+
+        mock_cached = [_make_test_movie("Cached Cinema")]
+        save_cached_movies("SE", mock_cached)
+
+        with patch(
+            "upcoming_movies.cli.scrape_upcoming_movies_from_imdb"
+        ) as mock_scrape:
+            exit_code = cli_main(["-f", "terminal", "--no-prompt"])
+            assert exit_code == 0
+            mock_scrape.assert_not_called()
+
+    def test_refresh_flag_bypasses_cache(self, tmp_path: Path) -> None:
+        from upcoming_movies.cache import save_cached_movies
+
+        mock_cached = [_make_test_movie("Old Film")]
+        save_cached_movies("SE", mock_cached)
+
+        fresh_movies = [_make_test_movie("Fresh Live Film")]
+        with patch(
+            "upcoming_movies.cli.scrape_upcoming_movies_from_imdb",
+            return_value=fresh_movies,
+        ) as mock_scrape:
+            exit_code = cli_main(["--refresh", "-f", "terminal", "--no-prompt"])
+            assert exit_code == 0
+            mock_scrape.assert_called_once()
+
+    def test_no_cache_flag_bypasses_cache(self, tmp_path: Path) -> None:
+        from upcoming_movies.cache import save_cached_movies
+
+        mock_cached = [_make_test_movie("Old Film")]
+        save_cached_movies("SE", mock_cached)
+
+        fresh_movies = [_make_test_movie("Fresh Film")]
+        with patch(
+            "upcoming_movies.cli.scrape_upcoming_movies_from_imdb",
+            return_value=fresh_movies,
+        ) as mock_scrape:
+            exit_code = cli_main(["--no-cache", "-f", "terminal", "--no-prompt"])
+            assert exit_code == 0
+            mock_scrape.assert_called_once()
+
+    def test_fallback_to_stale_cache_on_exception(self, tmp_path: Path) -> None:
+        import os
+        import time
+
+        from upcoming_movies.cache import save_cached_movies
+
+        mock_cached = [_make_test_movie("Stale Resilient Film")]
+        path = save_cached_movies("SE", mock_cached)
+        # make it stale (>24h)
+        old_time = time.time() - (48 * 3600)
+        os.utime(path, (old_time, old_time))
+
+        with patch(
+            "upcoming_movies.cli.scrape_upcoming_movies_from_imdb",
+            side_effect=RuntimeError("Network down"),
+        ):
+            exit_code = cli_main(["-f", "terminal", "--no-prompt"])
+            assert exit_code == 0
 
     def test_prompt_fallback_when_format_omitted(self, tmp_path: Path) -> None:
         out_file = tmp_path / "fallback.ics"
