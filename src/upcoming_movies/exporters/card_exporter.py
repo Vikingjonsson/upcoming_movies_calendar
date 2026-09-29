@@ -29,7 +29,7 @@ def format_movie_card(event: MovieCalendarEvent) -> str:
 
     if event.poster_image_url:
         lines.append(">")
-        lines.append(f"> [![Poster]({event.poster_image_url})]({event.imdb_url})")
+        lines.append(f"> 🖼 Image: [{event.title} Poster]({event.imdb_url})")
 
     lines.append("")
     return "\n".join(lines)
@@ -56,7 +56,7 @@ def build_cards_from_movie_events(
             if event.genres:
                 slide_lines.append(f"**Genres**: {', '.join(event.genres)}  ")
             if event.poster_image_url:
-                slide_lines.append(f"![Poster]({event.poster_image_url})")
+                slide_lines.append(f"🖼 Image: [{event.title} Poster]({event.imdb_url})")
             slide_lines.append(f"\n{event.plot_description}\n")
             slides.append("\n".join(slide_lines))
 
