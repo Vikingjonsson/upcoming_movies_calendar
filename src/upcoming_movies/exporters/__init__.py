@@ -11,10 +11,19 @@ from upcoming_movies.exporters.card_exporter import (
     build_cards_from_movie_events as build_cards_from_movie_events,
 )
 from upcoming_movies.exporters.card_exporter import (
+    build_terminal_cards_from_movie_events as build_terminal_cards_from_movie_events,
+)
+from upcoming_movies.exporters.card_exporter import (
     format_movie_card as format_movie_card,
 )
 from upcoming_movies.exporters.card_exporter import (
+    format_terminal_card as format_terminal_card,
+)
+from upcoming_movies.exporters.card_exporter import (
     save_cards_to_file as save_cards_to_file,
+)
+from upcoming_movies.exporters.card_exporter import (
+    save_terminal_cards_to_file as save_terminal_cards_to_file,
 )
 from upcoming_movies.exporters.ics_exporter import (
     DEFAULT_CALENDAR_NAME,
@@ -80,6 +89,16 @@ def _export_cards(
     )
 
 
+def _export_terminal(
+    movie_events: list[MovieCalendarEvent],
+    output_filepath: str,
+    *,
+    width: int = 70,
+    **_kwargs: Any,
+) -> None:
+    save_terminal_cards_to_file(movie_events, output_filepath, width=width)
+
+
 SUPPORTED_FORMATS: dict[str, FormatDefinition] = {
     "ics": {
         "name": "iCalendar (.ics)",
@@ -102,16 +121,25 @@ SUPPORTED_FORMATS: dict[str, FormatDefinition] = {
         "shorthand": "cards",
         "exporter": _export_cards,
     },
+    "terminal": {
+        "name": "Terminal Card View",
+        "extension": ".txt",
+        "default_filename": "upcoming_movies_cards.txt",
+        "shorthand": "terminal",
+        "exporter": _export_terminal,
+    },
 }
 
 DEFAULT_FORMAT = "ics"
 
 
 def normalize_format(format_name: str) -> str:
-    """Normalize format name and aliases (e.g. 'card' -> 'cards')."""
+    """Normalize format name and aliases (e.g. 'term' -> 'terminal')."""
     lower = format_name.lower().strip()
-    if lower == "card":
+    if lower in ("card", "markdown-cards", "md-cards"):
         return "cards"
+    if lower in ("terminal-cards", "terminal-card", "card-view", "term"):
+        return "terminal"
     return lower
 
 

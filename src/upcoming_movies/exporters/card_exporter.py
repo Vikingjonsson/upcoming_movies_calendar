@@ -1,13 +1,16 @@
-"""Markdown card exporter for upcoming movie events."""
+"""Card exporter for upcoming movie events (Markdown, Carousel, and Terminal views)."""
 
 from __future__ import annotations
 
 import logging
+import textwrap
 from collections.abc import Sequence
 
 from upcoming_movies.models import MovieCalendarEvent
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_CARD_WIDTH: int = 70
 
 
 def format_movie_card(event: MovieCalendarEvent) -> str:
@@ -83,4 +86,80 @@ def save_cards_to_file(
         logger.info("Cards saved to %s (%d movies)", output_filepath, len(movie_events))
     except OSError as error:
         logger.error("Error saving cards to %s: %s", output_filepath, error)
+        raise
+
+
+def format_terminal_card(
+    event: MovieCalendarEvent,
+    index: int = 1,
+    width: int = DEFAULT_CARD_WIDTH,
+) -> str:
+    """Format a movie event into a terminal card matching the UI specification."""
+    border = "─" * width
+    formatted_date = event.release_date.strftime("%B %d, %Y (%A)")
+    genres_text = ", ".join(event.genres) if event.genres else "N/A"
+    poster_text = event.poster_image_url if event.poster_image_url else "N/A"
+
+    lines: list[str] = [
+        border,
+        f"[{index}] 🎬 {event.title}  [MOVIE]",
+        f"   📅 Release: {formatted_date}",
+        f"   🎭 Genres:  {genres_text}",
+        f"   🔗 Link:    {event.imdb_url}",
+        f"   🖼️  Poster:  {poster_text}",
+        "",
+    ]
+
+    plot = (
+        event.plot_description.strip()
+        if event.plot_description
+        else "No description available"
+    )
+    wrap_width = max(20, width - 3)
+    wrapped_plot = textwrap.fill(
+        plot,
+        width=wrap_width,
+        initial_indent="   ",
+        subsequent_indent="   ",
+    )
+    lines.append(wrapped_plot)
+    lines.append(border)
+
+    return "\n".join(lines)
+
+
+def build_terminal_cards_from_movie_events(
+    movie_events: Sequence[MovieCalendarEvent],
+    width: int = DEFAULT_CARD_WIDTH,
+) -> str:
+    """Serialize movie events into terminal card views separated by newlines."""
+    if not movie_events:
+        border = "─" * width
+        return f"{border}\n* No upcoming movies found *\n{border}\n"
+
+    cards = [
+        format_terminal_card(event, index=idx, width=width)
+        for idx, event in enumerate(movie_events, 1)
+    ]
+    return "\n".join(cards) + "\n"
+
+
+def save_terminal_cards_to_file(
+    movie_events: Sequence[MovieCalendarEvent],
+    output_filepath: str,
+    width: int = DEFAULT_CARD_WIDTH,
+    **_kwargs: object,
+) -> None:
+    """Save formatted terminal cards to a file."""
+    content = build_terminal_cards_from_movie_events(movie_events, width=width)
+    try:
+        with open(output_filepath, "w", encoding="utf-8") as output_file:
+            output_file.write(content)
+        logger.info(
+            "Terminal cards saved to %s (%d movies)",
+            output_filepath,
+            len(movie_events),
+        )
+    except OSError as error:
+        logger.error("Error saving terminal cards to %s: %s", output_filepath, error)
         raise

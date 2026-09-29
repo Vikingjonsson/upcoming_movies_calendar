@@ -14,6 +14,7 @@ from upcoming_movies.config import DEFAULT_CONFIG, REGIONS
 from upcoming_movies.exporters import (
     DEFAULT_FORMAT,
     SUPPORTED_FORMATS,
+    build_terminal_cards_from_movie_events,
     export_movie_events,
     filter_movies_by_date,
     get_weekend_movies,
@@ -141,20 +142,27 @@ def prompt_card_carousel() -> bool:
     return user_input == "2"
 
 
-def prompt_output_filepath(default_filename: str) -> str:
+def prompt_output_filepath(
+    default_filename: str, *, is_terminal: bool = False
+) -> str | None:
     """Prompt user for custom output file path or accept default."""
     if not sys.stdin.isatty():
-        return default_filename
+        return None if is_terminal else default_filename
 
+    prompt_label = (
+        "\nOutput file path [press Enter to print to terminal]: "
+        if is_terminal
+        else f"\nOutput file path (default: {default_filename}): "
+    )
     try:
-        user_input = input(
-            f"\nOutput file path (default: {default_filename}): "
-        ).strip()
+        user_input = input(prompt_label).strip()
     except (EOFError, KeyboardInterrupt):
         print()
-        return default_filename
+        return None if is_terminal else default_filename
 
-    return user_input if user_input else default_filename
+    if user_input:
+        return user_input
+    return None if is_terminal else default_filename
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -165,11 +173,12 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=(
             "examples:\n"
             "  upcoming-movies                     # Interactive mode (prompts)\n"
+            "  upcoming-movies --card-view         # View movies as cards in terminal\n"
+            "  upcoming-movies -f terminal         # View movies as terminal cards\n"
+            "  upcoming-movies -i data.json --card-view # Card view from cached JSON\n"
             "  upcoming-movies -f json             # Export to JSON (Sweden)\n"
             "  upcoming-movies -f cards --weekend  # Export weekend movies as cards\n"
-            "  upcoming-movies -i data.json -f cards  # Convert cached JSON to cards\n"
             "  upcoming-movies -f ics -r US        # Export to ICS (United States)\n"
-            "  upcoming-movies -f json -o out.json # Export to custom filename\n"
             "  upcoming-movies -l                  # List common region codes\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -177,9 +186,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-f",
         "--format",
-        choices=list(SUPPORTED_FORMATS.keys()) + ["card"],
+        choices=list(SUPPORTED_FORMATS.keys()) + ["card", "term"],
         default=None,
-        help="Output format ('ics', 'json', or 'cards'). Prompts if omitted.",
+        help="Output format ('ics', 'json', 'cards', 'terminal'). Prompts if omitted.",
+    )
+    parser.add_argument(
+        "--card-view",
+        action="store_true",
+        help="Display movies as visual cards directly in the terminal.",
     )
     parser.add_argument(
         "-r",
@@ -298,7 +312,9 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
         region = DEFAULT_CONFIG["region"]
 
     # 2. Determine format
-    if arguments.format:
+    if arguments.card_view:
+        selected_format = "terminal"
+    elif arguments.format:
         selected_format = normalize_format(arguments.format)
     elif is_interactive:
         selected_format = prompt_output_format(default=DEFAULT_FORMAT)
@@ -312,11 +328,14 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
 
     # 4. Determine output filepath
     default_filename = resolve_output_filename(selected_format)
+    output_filepath: str | None = None
     if arguments.output:
         output_filepath = arguments.output
     elif is_interactive:
-        output_filepath = prompt_output_filepath(default_filename)
-    else:
+        output_filepath = prompt_output_filepath(
+            default_filename, is_terminal=(selected_format == "terminal")
+        )
+    elif selected_format != "terminal":
         output_filepath = default_filename
 
     # 5. Determine date filters
@@ -400,6 +419,37 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
             print("No matching movies found.")
         return 0
 
+    if selected_format == "terminal" or arguments.card_view:
+        cards_output = build_terminal_cards_from_movie_events(movie_events)
+        if not arguments.quiet:
+            print()
+            print(cards_output, end="")
+
+        if output_filepath:
+            try:
+                export_movie_events(
+                    movie_events,
+                    format_name="terminal",
+                    output_filepath=output_filepath,
+                )
+                if not arguments.quiet:
+                    print(
+                        f"Saved {len(movie_events)} terminal cards to "
+                        f"{output_filepath}."
+                    )
+            except Exception as exc:
+                logger.debug("Export failed with exception", exc_info=True)
+                print(f"Error saving terminal cards: {exc}", file=sys.stderr)
+                return 1
+
+        if arguments.quiet:
+            if output_filepath:
+                print(output_filepath)
+            else:
+                print(cards_output, end="")
+        return 0
+
+    export_filepath = output_filepath or default_filename
     export_kwargs: dict[str, Any] = {
         "calendar_name": arguments.calendar_name,
     }
@@ -410,7 +460,7 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
         export_movie_events(
             movie_events,
             format_name=selected_format,
-            output_filepath=output_filepath,
+            output_filepath=export_filepath,
             **export_kwargs,
         )
     except Exception as exc:
@@ -421,16 +471,16 @@ def cli_main(argv: Sequence[str] | None = None) -> int:
     logger.info(
         "Process completed. Exported %d movies to %s (%s format).",
         len(movie_events),
-        output_filepath,
+        export_filepath,
         selected_format,
     )
 
     if arguments.quiet:
-        print(output_filepath)
+        print(export_filepath)
     else:
         print(
             f"Successfully exported {len(movie_events)} movies to "
-            f"{output_filepath} ({selected_format} format)."
+            f"{export_filepath} ({selected_format} format)."
         )
 
     return 0

@@ -1,7 +1,7 @@
 ---
 name: movie-calendar
 description: >-
-  Workflows for scraping upcoming movie releases from IMDB, running the interactive or flag-driven CLI, and exporting to ICS, JSON, or Markdown Cards.
+  Workflows for scraping upcoming movie releases from IMDB, running the interactive or flag-driven CLI, and exporting to ICS, JSON, Markdown Cards, or Terminal Cards.
 ---
 
 # Movie Calendar Workflow Skill
@@ -14,6 +14,11 @@ Use this skill when developing, testing, scraping, or exporting upcoming movie c
 # Interactive mode (prompts for region, format, date filter, style, and output file)
 ./venv/bin/upcoming-movies
 
+# Display movies as visual cards in terminal
+./venv/bin/upcoming-movies --card-view
+./venv/bin/upcoming-movies -f terminal --weekend
+./venv/bin/upcoming-movies -i upcoming_movies.json --card-view
+
 # Export Swedish releases to JSON
 ./venv/bin/upcoming-movies -f json -r SE
 
@@ -22,9 +27,6 @@ Use this skill when developing, testing, scraping, or exporting upcoming movie c
 
 # Export as Antigravity carousel
 ./venv/bin/upcoming-movies -f cards -r SE --weekend --carousel
-
-# Offline mode: Convert cached JSON into filtered cards without scraping
-./venv/bin/upcoming-movies -i upcoming_movies.json -f cards --weekend
 
 # Date filtering flags
 ./venv/bin/upcoming-movies -f json --today
@@ -40,7 +42,7 @@ Use this skill when developing, testing, scraping, or exporting upcoming movie c
 ## Verification Workflows
 
 ```bash
-./venv/bin/pytest                     # Run full test suite (90+ tests)
+./venv/bin/pytest                     # Run full test suite (100+ tests)
 ./venv/bin/ruff check .                # Lint codebase
 ./venv/bin/ruff format --check .       # Check formatting
 ./venv/bin/mypy src                    # Strict type checking (100% type coverage)

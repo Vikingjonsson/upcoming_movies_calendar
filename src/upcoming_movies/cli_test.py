@@ -48,6 +48,7 @@ class TestCliArgParsing:
         assert args.from_date is None
         assert args.to_date is None
         assert not args.carousel
+        assert not args.card_view
         assert not args.list_regions
         assert not args.no_prompt
         assert not args.quiet
@@ -98,6 +99,10 @@ class TestCliArgParsing:
     def test_list_regions_flag(self) -> None:
         args = parse_command_line_arguments(["-l"])
         assert args.list_regions is True
+
+    def test_card_view_flag(self) -> None:
+        args = parse_command_line_arguments(["--card-view"])
+        assert args.card_view is True
 
     def test_invalid_format_fails(self) -> None:
         parser = build_parser()
@@ -236,6 +241,36 @@ class TestCliMain:
         assert exit_code == 0
         assert not out_file.exists()
 
+    def test_card_view_stdout(self, capsys: pytest.CaptureFixture[str]) -> None:
+        mock_movies = [_make_test_movie("Terminal Movie")]
+        with patch(
+            "upcoming_movies.cli.scrape_upcoming_movies_from_imdb",
+            return_value=mock_movies,
+        ):
+            exit_code = cli_main(["--card-view", "--no-prompt"])
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        assert "[1] 🎬 Terminal Movie  [MOVIE]" in captured.out
+        assert "─" * 70 in captured.out
+
+    def test_format_terminal_with_file_output(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        out_file = tmp_path / "terminal.txt"
+        mock_movies = [_make_test_movie("File Terminal Movie")]
+        with patch(
+            "upcoming_movies.cli.scrape_upcoming_movies_from_imdb",
+            return_value=mock_movies,
+        ):
+            exit_code = cli_main(["-f", "terminal", "-o", str(out_file), "--no-prompt"])
+        assert exit_code == 0
+        assert out_file.exists()
+        assert "[1] 🎬 File Terminal Movie  [MOVIE]" in out_file.read_text(
+            encoding="utf-8"
+        )
+        captured = capsys.readouterr()
+        assert "[1] 🎬 File Terminal Movie  [MOVIE]" in captured.out
+
 
 class TestPromptHelpers:
     def test_prompt_region_non_tty(self) -> None:
@@ -312,3 +347,13 @@ class TestPromptHelpers:
             patch("builtins.input", return_value=""),
         ):
             assert prompt_output_filepath("default.json") == "default.json"
+
+    def test_prompt_output_filepath_terminal_default_none(self) -> None:
+        with (
+            patch("sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value=""),
+        ):
+            assert (
+                prompt_output_filepath("upcoming_movies_cards.txt", is_terminal=True)
+                is None
+            )
