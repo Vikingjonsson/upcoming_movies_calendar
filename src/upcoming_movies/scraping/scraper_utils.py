@@ -7,14 +7,16 @@ from email.utils import parsedate_to_datetime
 IMDB_DATE_FORMAT = "%b %d, %Y"
 
 
-# ⚡ Bolt: Cache parsed dates to avoid redundant strptime calculations for identical string inputs.
+# ⚡ Bolt: Cache parsed dates to avoid redundant strptime calculations
+# for identical string inputs.
 @functools.cache
 def parse_imdb_release_date(date_text: str) -> date:
     """Parse traditional IMDB release date string (e.g. 'Oct 2, 2026')."""
     return datetime.strptime(date_text, IMDB_DATE_FORMAT).date()
 
 
-# ⚡ Bolt: Cache parsed dates to avoid redundant strptime calculations for identical string inputs.
+# ⚡ Bolt: Cache parsed dates to avoid redundant strptime calculations
+# for identical string inputs.
 @functools.cache
 def parse_flexible_release_date(date_text: str) -> date:
     """Parse release dates from various formats (RFC 2822, ISO, or IMDB textual)."""
